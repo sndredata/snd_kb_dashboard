@@ -88,7 +88,13 @@ td.sp,th.sp{width:20px;min-width:20px;padding:0 !important;background:none !impo
 th.g1,th.g2{color:var(--fg);font-weight:700;padding-bottom:4px}
 th.g1{border-bottom:3px solid var(--cm)}th.g2{border-bottom:3px solid var(--cj)}
 .lg{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}.lg i{width:12px;height:12px;border-radius:2px;display:inline-block}
-.presets{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}.presets>span{font-size:12px;color:var(--muted);margin-right:2px}
+.stick{position:sticky;top:0;z-index:8;background:var(--bg);margin:-16px -16px 16px;padding:16px 16px 0}
+.stick nav.tabs{margin-bottom:0}
+.presets{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:12px;padding:8px 10px;background:var(--cell);border-radius:8px}
+.presets>span,.reglbl{font-size:12px;font-weight:700;color:var(--muted)}.presets>span{margin-right:4px}.reglbl{margin:0 0 6px 2px}
+.presets .chip{border-radius:6px;font-weight:500}
+.presets .chip[aria-pressed=true]{background:var(--ink);color:var(--ink-fg);border-color:var(--ink)}
+.presets .chip.clr{margin-left:auto;border-color:transparent;background:none;color:var(--muted)}
 .mapgrid{display:grid;grid-template-columns:repeat(11,minmax(80px,1fr));grid-auto-rows:21px;column-gap:4px;min-width:960px}
 .mex{display:flex;align-items:center;gap:14px;margin-bottom:12px;flex-wrap:wrap}.mex ul{list-style:none;margin:0;padding:0;font-size:13px;line-height:1.7}.mex li b{display:inline-block;width:34px;color:var(--muted)}.mex .muted{font-size:12px}
 .mt{display:flex;flex-direction:column;margin:1px 0;font-variant-numeric:tabular-nums;border-radius:4px;overflow:hidden;border:1px solid var(--line);background:var(--card)}
@@ -102,6 +108,7 @@ body.viewer #expAll,body.viewer #goData,body.viewer .btn.png{display:none!import
 @media (max-width:640px){
  .sb{display:none}
  body{padding-inline:10px;font-size:13px}.wrap{padding-block:10px 32px}
+ .stick{margin:-10px -10px 12px;padding:8px 10px 0}.stick header.top{margin-bottom:4px}.stick h1{font-size:17px}
  .card{padding:12px}.pnl{padding:8px}
  td{padding:4px 3px}th{padding:2px 2px;font-size:11px}
  td.rk{width:20px}table{border-spacing:0 1px}
@@ -113,7 +120,7 @@ body.viewer #expAll,body.viewer #goData,body.viewer .btn.png{display:none!import
 </style>
 
 <div class="wrap">
-  <header class="top">
+  <div class="stick"><header class="top">
     <div>
       <h1>옆집선배 부동산 시계열</h1>
       <div class="asof" id="asof"></div>
@@ -124,7 +131,7 @@ body.viewer #expAll,body.viewer #goData,body.viewer .btn.png{display:none!import
       <button class="btn pri" id="goData">주간 데이터 업데이트</button>
     </div>
   </header>
-  <nav class="tabs" role="tablist" id="tabs"></nav>
+  <nav class="tabs" role="tablist" id="tabs"></nav></div>
   <main id="view"></main>
 </div>
 
@@ -247,7 +254,7 @@ const seg=(name,opts,cur)=>`<div class="seg" role="group">${opts.map(([v,l])=>`<
 /* ---------- state ---------- */
 const S={tab:'week',mapMetric:'mae',grp:'서울',localGrp:false,topMetric:'mae',period:0,topN:10,
   cmetric:'mae',cwin:25,sel:['전국','서울','경기','6개광역시','기타지방'],colors:{},
-  g33:'서울',tsMetric:'mae',tsGrp:'서울',tsWin:33,weekGrp:'서울'};
+  g33:'서울',tsMetric:'mae',tsGrp:'서울',tsWin:26,weekGrp:'서울'};
 const SERIES_VARS=['--s1','--s2','--s3','--s4','--s5','--s6','--s7','--s8'];
 const SIDO=['전국','서울','경기','인천','부산','대구','대전','광주','울산','강원','충북','충남','세종','전북','전남','경북','경남','제주'];
 const TILE={인천:[0,0],서울:[1,0],경기:[2,0],강원:[3,0],충남:[0,1],세종:[1,1],충북:[2,1],경북:[3,1],전북:[0,2],대전:[1,2],대구:[2,2],울산:[3,2],전남:[0,3],광주:[1,3],경남:[2,3],부산:[3,3],제주:[0,4]};
@@ -364,12 +371,12 @@ function viewChart(){
     const last=lv?lv.vals[lv.vals.length-1]:null;
     return `<button class="chip" data-act="reg" data-v="${esc(r)}" aria-pressed="${on}"><i style="${on?`background:var(${colorFor(r)})`:''}"></i>${esc(r)}${on?` <b>${kind==='w'?f2(last):f1(last)}</b>`:''}</button>`}).join('');
   const same=p=>p.length===S.sel.length&&p.every(r=>S.sel.includes(r));
-  const presets=`<div class="presets"><span>지역 묶음</span>${PRESETS.map((p,i)=>`<button class="chip" data-act="preset" data-v="${i}" aria-pressed="${same(p[1])}">${esc(p[0])}</button>`).join('')}<button class="chip" data-act="clearsel" ${S.sel.length?'':'disabled'} style="${S.sel.length?'':'opacity:.45;cursor:default'}">✕ 선택 해제</button></div>`;
+  const presets=`<div class="presets"><span>지역 묶음</span>${PRESETS.map((p,i)=>`<button class="chip" data-act="preset" data-v="${i}" aria-pressed="${same(p[1])}">${esc(p[0])}</button>`).join('')}<button class="chip clr" data-act="clearsel" ${S.sel.length?'':'disabled'} style="${S.sel.length?'':'opacity:.45;cursor:default'}">✕ 선택 해제</button></div>`;
   const ctl=`<div class="ctl">${seg('cmetric',[['mae','매매증감'],['jeon','전세증감'],['mae_s','매매심리'],['jeon_s','전세심리'],['mae_t','매매거래'],['jeon_t','전세거래']],S.cmetric)}${seg('cwin',[[13,'3개월'],[25,'6개월'],[52,'1년'],[104,'2년'],[9999,'전체']],S.cwin)}</div>`;
   const hint=kind==='s'?'<div class="muted" style="font-size:12px;margin-bottom:8px">KB 부동산 시장 심리 조사 지수(100 기준 아님, 지수 자체 정의 확인 필요). 최대 8개 지역까지 비교됩니다.</div>':'<div class="muted" style="font-size:12px;margin-bottom:8px">최대 8개 지역까지 비교됩니다.</div>';
   const rowsHead=`<tr><th class="l">지역</th>${ds.slice(-8).map(d=>`<th>${md(d)}</th>`).join('')}</tr>`;
   const rowsBody=series.map(s=>`<tr><td class="l"><i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${s.color};margin-right:6px"></i>${esc(s.name)}</td>${s.vals.slice(-8).map(v=>kind==='w'?cellM(v):`<td>${f1(v)}</td>`).join('')}</tr>`).join('');
-  const body=`${ctl}${presets}<div class="chips" style="margin-bottom:12px">${chips}</div>${hint}<div class="chart" id="chartHost"></div><div class="tw" style="margin-top:12px"><table><thead>${rowsHead}</thead><tbody>${rowsBody}</tbody></table></div>`;
+  const body=`${ctl}${presets}<div class="reglbl">개별 지역</div><div class="chips" style="margin-bottom:12px">${chips}</div>${hint}<div class="chart" id="chartHost"></div><div class="tw" style="margin-top:12px"><table><thead>${rowsHead}</thead><tbody>${rowsBody}</tbody></table></div>`;
   return card(meta[0]+' 추이',body,{png:meta[0]+'_추이'});
 }
 function view33(){
@@ -388,7 +395,7 @@ function viewTs(){
   const cur=gs.find(g=>g[0]===S.tsGrp)||gs[0];
   const a=L-S.tsWin+1,idxs=[];for(let i=a;i<=L;i++)idxs.push(i);
   const chips=`<div class="chips" style="margin-bottom:12px">${gs.map(g=>`<button class="chip" data-seg="tsGrp" data-v="${esc(g[0])}" aria-pressed="${g[0]===cur[0]}">${esc(g[0])}</button>`).join('')}</div>`;
-  const ctl=`<div class="ctl">${seg('tsMetric',[['mae','매매증감'],['jeon','전세증감']],S.tsMetric)}${seg('tsWin',[[13,'13주'],[33,'33주'],[52,'52주']],S.tsWin)}</div>`;
+  const ctl=`<div class="ctl">${seg('tsMetric',[['mae','매매증감'],['jeon','전세증감']],S.tsMetric)}${seg('tsWin',[[13,'3개월'],[26,'6개월'],[52,'1년']],S.tsWin)}</div>`;
   const th=idxs.map(i=>`<th>${md(D.dates[i])}</th>`).join('');
   const rows=cur[1].map(n=>`<tr><td class="l">${esc(n)}</td>${idxs.map(i=>cellM(wv(S.tsMetric,n,i))).join('')}</tr>`).join('');
   const nm=S.tsMetric==='mae'?'매매':'전세';
@@ -657,7 +664,7 @@ function render(){
   try{history.replaceState(null,'','#'+S.tab)}catch(e){}
 }
 document.addEventListener('click',e=>{
-  const tb=e.target.closest('[data-tab]');if(tb){S.tab=tb.dataset.tab;render();return}
+  const tb=e.target.closest('[data-tab]');if(tb){S.tab=tb.dataset.tab;render();window.scrollTo(0,0);return}
   const sg=e.target.closest('[data-seg]');
   if(sg){const k=sg.dataset.seg;let v=sg.dataset.v;if(['cwin','topN','tsWin'].includes(k))v=+v;S[k]=v;render();return}
   const ac=e.target.closest('[data-act]');if(!ac)return;

@@ -1,0 +1,675 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><title>옆집선배 시계열 대시보드</title></head><body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* Layout: sticky header + tab bar, one card per shareable table/chart (each card exports to PNG). */
+:root{
+  --bg:#f2f4f8; --card:#ffffff; --fg:#17202e; --muted:#5b687c; --line:#dbe1ea; --cell:#f5f6f9;
+  --up:#d93d36; --down:#2a6ad1; --ink:#17202e; --ink-fg:#ffffff;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#008300; --s7:#6250d6; --s8:#e34948;
+  --lbl:#334155;--lbl-fg:#ffffff;--cm:#4472C4;--cj:#FF6565;--bu1:#FFF4D1;--bu2:#FDE49D;--bu3:#FCCA3E;--bu4:#FF9C19;--bu5:#FF750D;--bu6:#E5530A;--bu1f:#1b2330;--bu2f:#1b2330;--bu3f:#1b2330;--bu4f:#1b2330;--bu5f:#1b2330;--bu6f:#1b2330;--bd1:#E8EEF9;--bd2:#D1DDF3;--bd3:#A4BCE6;--bd4:#678FD7;--bd5:#2B68D5;--bd6:#1E4DA8;--bd1f:#1b2330;--bd2f:#1b2330;--bd3f:#1b2330;--bd4f:#1b2330;--bd5f:#ffffff;--bd6f:#ffffff;
+  --font:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0d1219; --card:#161d29; --fg:#e8edf5; --muted:#9aa7bb; --line:#263143; --cell:#1b2331;
+  --up:#e5605a; --down:#4d8fe8; --ink:#e8edf5; --ink-fg:#0d1219;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767; --lbl:#e2e8f2;--lbl-fg:#0f1722;--cm:#6f95e0;--cj:#ff8585;--bu1:#3a351f;--bu2:#5c4f1f;--bu3:#86701a;--bu4:#b68b12;--bu5:#dc7a10;--bu6:#f4650b;--bu1f:#e9dfb8;--bu2f:#f3e9c4;--bu3f:#fff3cf;--bu4f:#14110a;--bu5f:#14110a;--bu6f:#14110a;--bd1:#222f4a;--bd2:#2c3f68;--bd3:#38558f;--bd4:#4a73c4;--bd5:#6a97e6;--bd6:#8fb4f5;--bd1f:#cdd9ef;--bd2f:#dbe6fa;--bd3f:#e6eefc;--bd4f:#ffffff;--bd5f:#0d1219;--bd6f:#0d1219; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d1219; --card:#161d29; --fg:#e8edf5; --muted:#9aa7bb; --line:#263143; --cell:#1b2331;
+  --up:#e5605a; --down:#4d8fe8; --ink:#e8edf5; --ink-fg:#0d1219;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767; --lbl:#e2e8f2;--lbl-fg:#0f1722;--cm:#6f95e0;--cj:#ff8585;--bu1:#3a351f;--bu2:#5c4f1f;--bu3:#86701a;--bu4:#b68b12;--bu5:#dc7a10;--bu6:#f4650b;--bu1f:#e9dfb8;--bu2f:#f3e9c4;--bu3f:#fff3cf;--bu4f:#14110a;--bu5f:#14110a;--bu6f:#14110a;--bd1:#222f4a;--bd2:#2c3f68;--bd3:#38558f;--bd4:#4a73c4;--bd5:#6a97e6;--bd6:#8fb4f5;--bd1f:#cdd9ef;--bd2f:#dbe6fa;--bd3f:#e6eefc;--bd4f:#ffffff;--bd5f:#0d1219;--bd6f:#0d1219; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:14px;line-height:1.5;padding-inline:16px}
+.wrap{max-width:1180px;margin:0 auto;padding-block:16px 48px}
+header.top{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:flex-end;justify-content:space-between;margin-bottom:12px}
+h1{font-size:20px;font-weight:700;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.asof{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+nav.tabs{display:flex;gap:4px;overflow-x:auto;padding-bottom:2px;margin-bottom:16px;border-bottom:1px solid var(--line)}
+nav.tabs button{font:inherit;font-weight:500;color:var(--muted);background:none;border:0;border-bottom:2px solid transparent;padding:8px 12px;cursor:pointer;white-space:nowrap}
+nav.tabs button[aria-selected=true]{color:var(--fg);border-bottom-color:var(--ink);font-weight:700}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--s1);outline-offset:2px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:16px;min-width:0}
+.card>.hd{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;margin-bottom:12px}
+.card h2{font-size:15px;font-weight:700;margin:0}
+.src{color:var(--muted);font-size:12px;margin-top:10px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:16px}
+.grid2>.card{margin:0}
+table.st{border-collapse:separate;border-spacing:0 3px;width:100%;table-layout:fixed}
+table.st th.l,table.st td.l{text-align:left;width:64px;padding-left:6px;font-weight:600}
+table.st td.h{border-radius:0}
+table.st td.h:nth-child(2){border-radius:6px 0 0 6px;border-right:5px solid var(--card);background-clip:padding-box}
+table.st td.h:nth-child(3){border-radius:0 6px 6px 0;border-left:5px solid var(--card);background-clip:padding-box}
+table.st th:nth-child(2){border-bottom:3px solid var(--cm);color:var(--fg)}
+table.st th:nth-child(3){border-bottom:3px solid var(--cj);color:var(--fg)}
+table.st tr:hover td.h{filter:brightness(.96)}
+.pnl{border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{font:inherit;border:0;background:var(--card);color:var(--muted);padding:5px 11px;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--ink-fg);font-weight:500}
+.btn{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:6px;padding:5px 10px;cursor:pointer}
+.btn.pri{background:var(--ink);color:var(--ink-fg);border-color:var(--ink)}
+select.btn{padding-right:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:14px;padding:3px 10px;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.chip[aria-pressed=true]{border-color:var(--fg);font-weight:500}
+.chip i{width:10px;height:10px;border-radius:50%;display:inline-block;background:var(--line)}
+.chip b{font-weight:500;color:var(--muted);font-variant-numeric:tabular-nums}
+.tw{overflow-x:auto}
+table{border-collapse:separate;border-spacing:0 2px;width:100%;font-variant-numeric:tabular-nums}
+th{font-weight:500;color:var(--muted);font-size:12px;text-align:center;padding:2px 4px;white-space:nowrap}
+th.l,td.l{text-align:left}
+td{padding:4px 6px;text-align:center;background:var(--cell);white-space:nowrap}
+td.l{background:none;font-weight:500;padding-left:2px}
+td.h{border-radius:3px}
+td.rk{color:var(--muted);background:none;width:28px}
+tr.sub td.l{font-weight:700}
+.sticky td.l,.sticky th.l{position:sticky;left:0;background:var(--card);z-index:1}
+.legend{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px}
+.legend .bar{height:8px;width:160px;border-radius:4px;background:linear-gradient(90deg,var(--down),var(--cell),var(--up))}
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;max-width:420px}
+.tile{border-radius:5px;padding:8px 4px;text-align:center;min-height:62px;display:flex;flex-direction:column;justify-content:center;font-variant-numeric:tabular-nums}
+.tile span{font-size:12px}.tile b{font-size:15px}
+.tile.e{visibility:hidden}
+.hero{display:flex;gap:24px;flex-wrap:wrap;margin-bottom:14px}
+.hero div{font-variant-numeric:tabular-nums}.hero small{display:block;color:var(--muted);font-size:12px}.hero strong{font-size:26px;font-weight:700}
+.up{color:var(--up)}.dn{color:var(--down)}
+.chart{position:relative}
+.chart svg{display:block;width:100%;height:auto}
+.tip{position:absolute;pointer-events:none;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:6px 9px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,.15);white-space:nowrap;z-index:3;font-variant-numeric:tabular-nums}
+.tip i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+.note{background:var(--cell);border-radius:6px;padding:10px 12px;margin-bottom:12px;color:var(--fg)}
+.note.warn{border-left:3px solid var(--s4)}.note.err{border-left:3px solid var(--s8)}.note.ok{border-left:3px solid var(--s3)}
+.note ul{margin:6px 0 0;padding-left:18px}
+.muted{color:var(--muted)}
+.empty{color:var(--muted);padding:24px;text-align:center}
+.png{margin-left:auto}
+td.sp,th.sp{width:20px;min-width:20px;padding:0 !important;background:none !important;border:0 !important}
+th.g1,th.g2{color:var(--fg);font-weight:700;padding-bottom:4px}
+th.g1{border-bottom:3px solid var(--cm)}th.g2{border-bottom:3px solid var(--cj)}
+.lg{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}.lg i{width:12px;height:12px;border-radius:2px;display:inline-block}
+.presets{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}.presets>span{font-size:12px;color:var(--muted);margin-right:2px}
+.mapgrid{display:grid;grid-template-columns:repeat(11,minmax(80px,1fr));grid-auto-rows:21px;column-gap:4px;min-width:960px}
+.mex{display:flex;align-items:center;gap:14px;margin-bottom:12px;flex-wrap:wrap}.mex ul{list-style:none;margin:0;padding:0;font-size:13px;line-height:1.7}.mex li b{display:inline-block;width:34px;color:var(--muted)}.mex .muted{font-size:12px}
+.mt{display:flex;flex-direction:column;margin:1px 0;font-variant-numeric:tabular-nums;border-radius:4px;overflow:hidden;border:1px solid var(--line);background:var(--card)}
+.mt>div{flex:1;display:flex;align-items:center;justify-content:center;font-size:13px}
+.mt>.mn{font-size:12px;font-weight:700;background:var(--lbl);color:var(--lbl-fg);white-space:nowrap}
+.sw{display:inline-flex;align-items:center;justify-content:center;min-width:44px;padding:1px 6px;border-radius:3px;font-size:11px;font-variant-numeric:tabular-nums;border:1px solid var(--line)}
+[data-png-hide]{}
+body.viewer #expAll,body.viewer #goData,body.viewer .btn.png{display:none!important}
+@media (max-width:560px){.tiles{max-width:none}.hero strong{font-size:22px}}
+.sd h3{font-size:13px;margin:14px 0 6px;color:var(--fg)}.mtg{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:6px}
+@media (max-width:640px){
+ .sb{display:none}
+ body{padding-inline:10px;font-size:13px}.wrap{padding-block:10px 32px}
+ .card{padding:12px}.pnl{padding:8px}
+ td{padding:4px 3px}th{padding:2px 2px;font-size:11px}
+ td.rk{width:20px}table{border-spacing:0 1px}
+ .hero{gap:16px}
+ table.st th.l,table.st td.l{width:48px}
+ .mex ul{font-size:12px}
+ .ctl{gap:6px}
+}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>옆집선배 부동산 시계열</h1>
+      <div class="asof" id="asof"></div>
+    </div>
+    <div class="ctl" style="margin:0">
+      <div class="seg" id="themeSeg" role="group" aria-label="화면 모드"><button data-theme-set="auto">자동</button><button data-theme-set="light">데이</button><button data-theme-set="dark">다크</button></div>
+      <button class="btn" id="expAll">이미지 일괄 저장</button>
+      <button class="btn pri" id="goData">주간 데이터 업데이트</button>
+    </div>
+  </header>
+  <nav class="tabs" role="tablist" id="tabs"></nav>
+  <main id="view"></main>
+</div>
+
+<script id="CFG" type="application/json">{"groups33": [{"title": "서울", "regions": ["서울", "강남구", "서초구", "송파구", "용산구", "성동구", "양천구", "광진구", "마포구", "강동구", "서울 중구", "동작구", "영등포구", "종로구", "서대문구", "강서구", "동대문구", "성북구", "은평구", "관악구", "노원구", "구로구", "강북구", "중랑구", "금천구", "도봉구"]}, {"title": "경기 남부-A", "regions": ["경기", "과천", "성남 분당구", "성남 수정구", "성남 중원구", "하남", "광명", "수원 영통구", "수원 팔달구", "수원 장안구", "수원 권선구", "용인 수지구", "용인 기흥구", "용인 처인구"]}, {"title": "경기 남부-B", "regions": ["안양 동안구", "안양 만안구", "의왕", "군포", "화성 동탄구", "화성 병점구", "화성 효행구", "화성 만세구", "부천 원미구", "부천 소사구", "부천 오정구", "안산 단원구", "안산 상록구", "김포", "광주(경기)", "시흥", "평택", "오산", "이천", "안성"]}, {"title": "경기 북부", "regions": ["고양 덕양구", "일산동구", "일산서구", "의정부", "구리", "남양주", "파주", "양주", "동두천"]}, {"title": "인천", "regions": ["인천", "인천 미추홀구", "인천 연수구", "인천 남동구", "인천 부평구", "인천 계양구", "제물포구", "영종구", "서해구", "검단구"]}, {"title": "부산", "regions": ["부산", "부산 해운대구", "부산 수영구", "부산 동래구", "부산 남구", "부산 연제구", "부산진구", "부산 금정구", "부산 서구", "부산 강서구", "부산 동구", "부산 기장군", "부산 북구", "부산 사하구", "부산 사상구", "부산 영도구", "부산 중구"]}, {"title": "대구", "regions": ["대구", "대구 수성구", "대구 중구", "대구 남구", "대구 서구", "대구 달서구", "대구 동구", "대구 북구", "대구 달성군"]}, {"title": "광주", "regions": ["광주", "광주 동구", "광주 남구", "광주 서구", "광주 광산구", "광주 북구"]}, {"title": "대전", "regions": ["대전", "대전 유성구", "대전 서구", "대전 중구", "대전 동구", "대전 대덕구", "세종"]}, {"title": "울산", "regions": ["울산", "울산 남구", "울산 중구", "울산 북구", "울산 동구", "울산 울주군"]}, {"title": "충북", "regions": ["충북", "청주 흥덕구", "청주 청원구", "청주 상당구", "청주 서원구", "충주", "제천"]}, {"title": "충남", "regions": ["충남", "천안 서북구", "천안 동남구", "아산", "계룡", "논산", "서산", "당진", "공주"]}, {"title": "전북", "regions": ["전북", "전주 덕진구", "전주 완산구", "익산", "군산"]}, {"title": "전남", "regions": ["전남", "여수", "순천", "광양", "목포"]}, {"title": "경북", "regions": ["경북", "포항 남구", "포항 북구", "구미", "경산", "안동", "김천"]}, {"title": "경남", "regions": ["경남", "창원", "창원 성산구", "창원 의창구", "마산회원구", "마산합포구", "창원 진해구", "진주", "양산", "김해", "거제", "통영"]}, {"title": "강원/제주", "regions": ["강원", "춘천", "강릉", "원주", "제주"]}], "local": ["춘천", "강릉", "원주", "군산", "익산", "전주 덕진구", "전주 완산구", "울산 중구", "울산 북구", "광주 광산구", "광주 북구", "순천", "광양", "울산 울주군", "울산 남구", "울산 동구", "천안 서북구", "천안 동남구", "충주", "제천", "광주 서구", "광주 남구", "광주 동구", "여수", "김해", "양산", "부산 북구", "부산 금정구", "부산 기장군", "당진", "아산", "청주 흥덕구", "청주 청원구", "제주", "목포", "진주", "창원 의창구", "부산 강서구", "부산진구", "부산 동래구", "부산 해운대구", "서산", "공주", "세종", "청주 서원구", "청주 상당구", "마산회원구", "창원 성산구", "부산 사상구", "부산 서구", "부산 연제구", "부산 수영구", "논산", "계룡", "대전 대덕구", "대전 유성구", "대전 중구", "김천", "구미", "안동", "마산합포구", "창원 진해구", "부산 사하구", "부산 중구", "부산 동구", "부산 남구", "대전 서구", "대전 동구", "대구 서구", "대구 북구", "대구 동구", "포항 북구", "통영", "거제", "부산 영도구", "대구 달서구", "대구 중구", "대구 수성구", "경산", "포항 남구", "대구 달성군", "대구 남구"], "pool": ["강북구", "광진구", "노원구", "도봉구", "동대문구", "마포구", "서대문구", "성동구", "성북구", "용산구", "은평구", "종로구", "서울 중구", "중랑구", "강남구", "강동구", "강서구", "관악구", "구로구", "금천구", "동작구", "서초구", "송파구", "양천구", "영등포구", "부산 중구", "부산 서구", "부산 동구", "부산 영도구", "부산진구", "부산 동래구", "부산 남구", "부산 북구", "부산 해운대구", "부산 사하구", "부산 금정구", "부산 연제구", "부산 수영구", "부산 사상구", "부산 기장군", "부산 강서구", "대구 중구", "대구 동구", "대구 서구", "대구 남구", "대구 북구", "대구 수성구", "대구 달서구", "대구 달성군", "인천 중구", "인천 동구", "인천 미추홀구", "인천 연수구", "인천 남동구", "인천 부평구", "인천 계양구", "인천 서구", "제물포구", "영종구", "서해구", "검단구", "광주 동구", "광주 서구", "광주 남구", "광주 북구", "광주 광산구", "대전 동구", "대전 중구", "대전 서구", "대전 유성구", "대전 대덕구", "울산 중구", "울산 남구", "울산 동구", "울산 북구", "울산 울주군", "세종", "수원 장안구", "수원 권선구", "수원 팔달구", "수원 영통구", "성남 수정구", "성남 중원구", "성남 분당구", "고양 덕양구", "일산동구", "일산서구", "안양 만안구", "안양 동안구", "부천 원미구", "부천 소사구", "부천 오정구", "의정부", "광명", "평택", "안산 단원구", "안산 상록구", "과천", "구리", "남양주", "용인 처인구", "용인 기흥구", "용인 수지구", "시흥", "군포", "의왕", "하남", "오산", "파주", "이천", "안성", "김포", "양주", "동두천", "광주(경기)", "화성 만세구", "화성 효행구", "화성 병점구", "화성 동탄구", "춘천", "강릉", "원주", "청주 상당구", "청주 서원구", "청주 청원구", "청주 흥덕구", "충주", "제천", "천안 동남구", "천안 서북구", "공주", "아산", "논산", "계룡", "당진", "서산", "전주 완산구", "전주 덕진구", "익산", "군산", "목포", "순천", "광양", "여수", "포항 남구", "포항 북구", "구미", "경산", "안동", "김천", "마산합포구", "마산회원구", "창원 성산구", "창원 의창구", "창원 진해구", "양산", "거제", "진주", "김해", "통영", "제주"], "mapA": [{"n": "일산서구", "r": 45, "c": 8}, {"n": "일산동구", "r": 45, "c": 9}, {"n": "고양 덕양구", "r": 45, "c": 10}, {"n": "파주", "r": 45, "c": 11}, {"n": "양주", "r": 45, "c": 12}, {"n": "동두천", "r": 45, "c": 13}, {"n": "의정부", "r": 45, "c": 14}, {"n": "은평구", "r": 48, "c": 10}, {"n": "강북구", "r": 48, "c": 11}, {"n": "도봉구", "r": 48, "c": 12}, {"n": "노원구", "r": 48, "c": 13}, {"n": "서대문구", "r": 51, "c": 10}, {"n": "종로구", "r": 51, "c": 11}, {"n": "성북구", "r": 51, "c": 12}, {"n": "동대문구", "r": 51, "c": 13}, {"n": "중랑구", "r": 51, "c": 14}, {"n": "구리", "r": 51, "c": 15}, {"n": "남양주", "r": 51, "c": 16}, {"n": "김포", "r": 54, "c": 8}, {"n": "마포구", "r": 54, "c": 10}, {"n": "용산구", "r": 54, "c": 11}, {"n": "서울 중구", "r": 54, "c": 12}, {"n": "성동구", "r": 54, "c": 13}, {"n": "광진구", "r": 54, "c": 14}, {"n": "검단구", "r": 57, "c": 8}, {"n": "서해구", "r": 58, "c": 7}, {"n": "강동구", "r": 58, "c": 16}, {"n": "인천 계양구", "r": 60, "c": 8}, {"n": "강서구", "r": 60, "c": 9}, {"n": "양천구", "r": 60, "c": 10}, {"n": "영등포구", "r": 60, "c": 11}, {"n": "동작구", "r": 60, "c": 12}, {"n": "서초구", "r": 60, "c": 13}, {"n": "강남구", "r": 60, "c": 14}, {"n": "송파구", "r": 60, "c": 15}, {"n": "제물포구", "r": 61, "c": 7}, {"n": "하남", "r": 61, "c": 16}, {"n": "영종구", "r": 62, "c": 6}, {"n": "인천 부평구", "r": 63, "c": 8}, {"n": "부천 오정구", "r": 63, "c": 9}, {"n": "구로구", "r": 63, "c": 10}, {"n": "금천구", "r": 63, "c": 11}, {"n": "관악구", "r": 63, "c": 12}, {"n": "과천", "r": 63, "c": 13}, {"n": "성남 수정구", "r": 63, "c": 14}, {"n": "성남 중원구", "r": 63, "c": 15}, {"n": "인천 미추홀구", "r": 64, "c": 7}, {"n": "광주(경기)", "r": 64, "c": 16}, {"n": "인천 남동구", "r": 66, "c": 8}, {"n": "부천 원미구", "r": 66, "c": 9}, {"n": "광명", "r": 66, "c": 10}, {"n": "안양 만안구", "r": 66, "c": 11}, {"n": "안양 동안구", "r": 66, "c": 12}, {"n": "의왕", "r": 66, "c": 13}, {"n": "성남 분당구", "r": 66, "c": 14}, {"n": "인천 연수구", "r": 67, "c": 7}, {"n": "부천 소사구", "r": 69, "c": 9}, {"n": "안산 단원구", "r": 69, "c": 10}, {"n": "군포", "r": 69, "c": 11}, {"n": "수원 장안구", "r": 69, "c": 12}, {"n": "수원 영통구", "r": 69, "c": 13}, {"n": "용인 수지구", "r": 69, "c": 14}, {"n": "시흥", "r": 72, "c": 9}, {"n": "안산 상록구", "r": 72, "c": 10}, {"n": "화성 만세구", "r": 72, "c": 11}, {"n": "수원 권선구", "r": 72, "c": 12}, {"n": "수원 팔달구", "r": 72, "c": 13}, {"n": "용인 기흥구", "r": 72, "c": 14}, {"n": "용인 처인구", "r": 72, "c": 15}, {"n": "이천", "r": 72, "c": 16}, {"n": "화성 효행구", "r": 75, "c": 11}, {"n": "화성 병점구", "r": 75, "c": 12}, {"n": "화성 동탄구", "r": 75, "c": 13}, {"n": "평택", "r": 78, "c": 11}, {"n": "오산", "r": 78, "c": 12}, {"n": "안성", "r": 78, "c": 13}], "mapB": [{"n": "춘천", "r": 86, "c": 14}, {"n": "강릉", "r": 86, "c": 15}, {"n": "원주", "r": 86, "c": 16}, {"n": "천안 서북구", "r": 89, "c": 6}, {"n": "천안 동남구", "r": 89, "c": 7}, {"n": "충주", "r": 89, "c": 10}, {"n": "제천", "r": 89, "c": 11}, {"n": "김천", "r": 89, "c": 14}, {"n": "구미", "r": 89, "c": 15}, {"n": "안동", "r": 89, "c": 16}, {"n": "당진", "r": 92, "c": 6}, {"n": "아산", "r": 92, "c": 7}, {"n": "청주 흥덕구", "r": 92, "c": 9}, {"n": "청주 청원구", "r": 92, "c": 10}, {"n": "대구 서구", "r": 92, "c": 12}, {"n": "대구 북구", "r": 92, "c": 14}, {"n": "대구 동구", "r": 92, "c": 15}, {"n": "포항 북구", "r": 92, "c": 16}, {"n": "서산", "r": 95, "c": 6}, {"n": "공주", "r": 95, "c": 7}, {"n": "세종", "r": 95, "c": 8}, {"n": "청주 서원구", "r": 95, "c": 9}, {"n": "청주 상당구", "r": 95, "c": 10}, {"n": "대구 달서구", "r": 95, "c": 12}, {"n": "대구 중구", "r": 95, "c": 13}, {"n": "대구 수성구", "r": 95, "c": 14}, {"n": "경산", "r": 95, "c": 15}, {"n": "포항 남구", "r": 95, "c": 16}, {"n": "논산", "r": 98, "c": 6}, {"n": "계룡", "r": 98, "c": 7}, {"n": "대전 대덕구", "r": 98, "c": 8}, {"n": "대전 유성구", "r": 98, "c": 9}, {"n": "대전 중구", "r": 98, "c": 10}, {"n": "대구 달성군", "r": 98, "c": 12}, {"n": "대구 남구", "r": 98, "c": 13}, {"n": "울산 울주군", "r": 98, "c": 14}, {"n": "울산 중구", "r": 98, "c": 15}, {"n": "울산 북구", "r": 98, "c": 16}, {"n": "대전 서구", "r": 101, "c": 9}, {"n": "대전 동구", "r": 101, "c": 10}, {"n": "울산 남구", "r": 101, "c": 15}, {"n": "울산 동구", "r": 101, "c": 16}, {"n": "김해", "r": 104, "c": 12}, {"n": "양산", "r": 104, "c": 13}, {"n": "부산 북구", "r": 104, "c": 14}, {"n": "부산 금정구", "r": 104, "c": 15}, {"n": "부산 기장군", "r": 104, "c": 16}, {"n": "군산", "r": 107, "c": 7}, {"n": "익산", "r": 107, "c": 8}, {"n": "전주 덕진구", "r": 107, "c": 9}, {"n": "전주 완산구", "r": 107, "c": 10}, {"n": "창원 의창구", "r": 107, "c": 12}, {"n": "부산 강서구", "r": 107, "c": 13}, {"n": "부산진구", "r": 107, "c": 14}, {"n": "부산 동래구", "r": 107, "c": 15}, {"n": "부산 해운대구", "r": 107, "c": 16}, {"n": "광주 광산구", "r": 110, "c": 7}, {"n": "광주 북구", "r": 110, "c": 8}, {"n": "순천", "r": 110, "c": 9}, {"n": "광양", "r": 110, "c": 10}, {"n": "마산회원구", "r": 110, "c": 11}, {"n": "창원 성산구", "r": 110, "c": 12}, {"n": "부산 사상구", "r": 110, "c": 13}, {"n": "부산 서구", "r": 110, "c": 14}, {"n": "부산 연제구", "r": 110, "c": 15}, {"n": "부산 수영구", "r": 110, "c": 16}, {"n": "광주 서구", "r": 113, "c": 7}, {"n": "광주 동구", "r": 113, "c": 8}, {"n": "여수", "r": 113, "c": 9}, {"n": "진주", "r": 113, "c": 10}, {"n": "마산합포구", "r": 113, "c": 11}, {"n": "창원 진해구", "r": 113, "c": 12}, {"n": "부산 사하구", "r": 113, "c": 13}, {"n": "부산 중구", "r": 113, "c": 14}, {"n": "부산 동구", "r": 113, "c": 15}, {"n": "부산 남구", "r": 113, "c": 16}, {"n": "목포", "r": 116, "c": 7}, {"n": "광주 남구", "r": 116, "c": 8}, {"n": "제주", "r": 116, "c": 12}, {"n": "통영", "r": 116, "c": 13}, {"n": "거제", "r": 116, "c": 14}, {"n": "부산 영도구", "r": 116, "c": 15}]}</script>
+<script>
+(function(){
+const VIEWER=true;if(VIEWER)document.body.classList.add('viewer');
+'use strict';
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let D=null;
+const CFG=JSON.parse($('#CFG').textContent);
+let BASE_LAST='';
+let IX,SX,W,L;
+function setup(){IX=new Map(D.names.map((n,i)=>[n,i]));SX=new Map(D.sgroups.map((n,i)=>[n,i]));W=D.dates.length;L=W-1;}
+/* ---------- data access ---------- */
+const wv=(k,n,i)=>{const c=IX.get(n);if(c==null)return null;const x=D[k][c][i];return x==null?null:x/1000};
+const wrow=(k,n,a,b)=>{const c=IX.get(n);const o=[];for(let i=a;i<=b;i++){const x=c==null?null:D[k][c][i];o.push(x==null?null:x/1000)}return o};
+const sv=(k,n,j,i)=>{const g=SX.get(n);if(g==null)return null;const x=D[k][g][j][i];return x==null?null:x/100};
+const lastDate=()=>D.dates[L];
+const dot=d=>d.slice(2).replace(/-/g,'.');
+const md=d=>d.slice(5).replace('-','/');
+const f2=v=>{if(v==null)return '–';const t=v.toFixed(2);return +t===0?'0.00':(v>0?'+':'')+t};
+const f1=v=>v==null?'–':v.toFixed(1);
+/* ---------- color helpers ---------- */
+function heat(v,max){
+  if(v==null)return '';
+  const t=Math.min(1,Math.abs(v)/max);
+  if(Math.abs(v)<0.005)return 'background:var(--cell)';
+  const c=v>0?'var(--up)':'var(--down)';
+  const p=Math.round(18+t*72);
+  return `background:color-mix(in srgb, ${c} ${p}%, var(--cell));color:${p>58?'#fff':'var(--fg)'}`;
+}
+const cell=(v,max=0.8,fmt=f2)=>`<td class="h" style="${heat(v,max)}">${fmt(v)}</td>`;
+/* ---------- period helpers ---------- */
+function yearEndIdx(){
+  const y=+lastDate().slice(0,4);const lim=`${y}-01-04`;
+  let i=L;while(i>0&&D.dates[i]>lim)i--;return i;
+}
+const PERIODS=[
+ ['이번 주',()=>[L-1,L]],['지난 주',()=>[L-2,L-1]],
+ ['전년말 대비',()=>[yearEndIdx(),L]],
+ ['1개월(4주)',()=>[L-4,L]],['3개월(12주)',()=>[L-12,L]],['6개월(24주)',()=>[L-24,L]],['1년(52주)',()=>[L-52,L]]];
+/* ---------- charts ---------- */
+const narrow=()=>window.innerWidth<640;
+function niceTicks(mn,mx,n){
+  if(mx===mn){mx=mn+1}
+  const raw=(mx-mn)/n,p=Math.pow(10,Math.floor(Math.log10(raw))),r=raw/p;
+  const st=(r<=1?1:r<=2?2:r<=5?5:10)*p;
+  const a=Math.floor(mn/st)*st,b=Math.ceil(mx/st)*st,o=[];
+  for(let v=a;v<=b+st/2;v+=st)o.push(+v.toFixed(10));
+  return o;
+}
+function lineChart(host,o){
+  const {dates,series,fmt=f2,zero=true}=o;let h=o.h||320;if(window.innerWidth<640)h=Math.min(h,260);
+  const NW=narrow(),n=dates.length,Wd=NW?Math.max(300,Math.min(860,window.innerWidth-80)):860,m={l:NW?38:48,r:o.labels===false?14:(NW?96:124),t:12,b:26};
+  const all=series.flatMap(s=>s.vals).filter(x=>x!=null);
+  if(!all.length||n<2){host.innerHTML='<div class="empty">표시할 지역을 선택하세요</div>';return}
+  let mn=Math.min(...all),mx=Math.max(...all);
+  if(zero){mn=Math.min(mn,0);mx=Math.max(mx,0)}
+  const tk=niceTicks(mn,mx,5);mn=tk[0];mx=tk[tk.length-1];
+  const x=i=>m.l+i*(Wd-m.l-m.r)/(n-1),y=v=>m.t+(1-(v-mn)/(mx-mn))*(h-m.t-m.b);
+  let g='';
+  tk.forEach(t=>{g+=`<line x1="${m.l}" x2="${Wd-m.r}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)" stroke-width="${t===0&&zero?1.5:1}" ${t===0&&zero?'':'opacity=".6"'}/><text x="${m.l-6}" y="${y(t)+4}" text-anchor="end" font-size="11" fill="var(--muted)">${fmt(t).replace(/^\+/,'')}</text>`});
+  const nx=Math.min(NW?3:6,n);
+  for(let k=0;k<nx;k++){const i=Math.round(k*(n-1)/(nx-1));g+=`<text x="${x(i)}" y="${h-6}" text-anchor="${k==0?'start':k==nx-1?'end':'middle'}" font-size="11" fill="var(--muted)">${dot(dates[i])}</text>`}
+  const ends=[];
+  series.forEach(s=>{
+    let d='',pen=false,lastI=-1;
+    s.vals.forEach((v,i)=>{if(v==null){pen=false;return}d+=(pen?'L':'M')+x(i).toFixed(1)+' '+y(v).toFixed(1);pen=true;lastI=i});
+    g+=`<path d="${d}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    if(n<=130){const pr=n<=30?3:n<=60?2.4:1.8;s.vals.forEach((v,i)=>{if(v==null||i===lastI)return;g+=`<circle cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="${pr}" fill="${s.color}" stroke="var(--card)" stroke-width="1"/>`})}
+    if(lastI>=0){g+=`<circle cx="${x(lastI)}" cy="${y(s.vals[lastI])}" r="3.5" fill="${s.color}" stroke="var(--card)" stroke-width="2"/>`;ends.push({s,x:x(lastI),y:y(s.vals[lastI]),v:s.vals[lastI]})}
+  });
+  if(o.labels!==false){
+    ends.sort((a,b)=>a.y-b.y);
+    ends.forEach((e,i)=>{e.ty=i?Math.max(e.y,ends[i-1].ty+14):e.y});
+    const maxY=h-m.b;for(let i=ends.length-1;i>=0;i--){const lim=i===ends.length-1?maxY:ends[i+1].ty-14;if(ends[i].ty>lim)ends[i].ty=lim}
+    ends.forEach(e=>{g+=`<text x="${e.x+10}" y="${e.ty+4}" font-size="${NW?11:12}" font-weight="500" fill="var(--fg)">${esc(e.s.name)} <tspan font-weight="700" style="font-variant-numeric:tabular-nums">${fmt(e.v)}</tspan></text>`});
+  }
+  host.innerHTML=`<svg viewBox="0 0 ${Wd} ${h}" role="img" aria-label="시계열 차트">${g}<line id="xh" y1="${m.t}" y2="${h-m.b}" stroke="var(--muted)" stroke-width="1" opacity="0" /><rect id="ov" x="${m.l}" y="${m.t}" width="${Wd-m.l-m.r}" height="${h-m.t-m.b}" fill="transparent"/></svg><div class="tip" hidden></div>`;
+  const svg=$('svg',host),ov=$('#ov',svg),xh=$('#xh',svg),tip=$('.tip',host);
+  const move=e=>{
+    const r=svg.getBoundingClientRect(),px=(e.clientX-r.left)*Wd/r.width;
+    let i=Math.round((px-m.l)/((Wd-m.l-m.r)/(n-1)));i=Math.max(0,Math.min(n-1,i));
+    xh.setAttribute('x1',x(i));xh.setAttribute('x2',x(i));xh.setAttribute('opacity','.7');
+    tip.innerHTML=`<b>${dot(dates[i])}</b>`+series.map(s=>`<div><i style="background:${s.color}"></i>${esc(s.name)} <b>${s.vals[i]==null?'–':fmt(s.vals[i])}</b></div>`).join('');
+    tip.hidden=false;
+    const hr=host.getBoundingClientRect(),tx=(x(i)/Wd)*r.width+(r.left-hr.left);
+    tip.style.left=Math.min(tx+12,hr.width-tip.offsetWidth-4)+'px';tip.style.top='8px';
+  };
+  ov.addEventListener('pointermove',move);ov.addEventListener('pointerdown',move);
+  ov.addEventListener('pointerleave',()=>{tip.hidden=true;xh.setAttribute('opacity','0')});
+}
+function sparkBars(vals,w=96,hh=28){
+  const a=vals.filter(v=>v!=null);if(!a.length)return '';
+  const mx=Math.max(...a.map(Math.abs))||1,bw=w/vals.length;
+  return `<svg width="${w}" height="${hh}" viewBox="0 0 ${w} ${hh}" aria-hidden="true"><line x1="0" x2="${w}" y1="${hh/2}" y2="${hh/2}" stroke="var(--line)"/>`+
+   vals.map((v,i)=>{if(v==null)return '';const bh=Math.max(1,Math.abs(v)/mx*(hh/2-1));return `<rect x="${i*bw+1}" y="${v>=0?hh/2-bh:hh/2}" width="${bw-2}" height="${bh}" fill="var(${v>=0?'--bu4':'--bd4'})"/>`}).join('')+'</svg>';
+}
+function sparkLine(vals,w=96,hh=28){
+  const a=vals.filter(v=>v!=null);if(a.length<2)return '';
+  const mn=Math.min(...a),mx=Math.max(...a),rg=(mx-mn)||1,n=vals.length;
+  const P=vals.map((v,i)=>v==null?null:[2+i*(w-4)/(n-1),2+(1-(v-mn)/rg)*(hh-4),v]);
+  const pts=P.filter(Boolean);
+  const imx=P.findIndex(p=>p&&p[2]===mx),imn=P.findIndex(p=>p&&p[2]===mn);
+  const dot=(p,c,t)=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3" fill="var(${c})" stroke="var(--card,#fff)" stroke-width="1"><title>${t} ${p[2].toFixed(2)}</title></circle>`;
+  return `<svg width="${w}" height="${hh}" viewBox="0 0 ${w} ${hh}" aria-hidden="true"><polyline points="${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}" fill="none" stroke="var(--fg)" stroke-width="1.8" stroke-linejoin="round"/>${dot(P[imn],'--bd5','최저')}${dot(P[imx],'--bu5','최고')}</svg>`;
+}
+
+/* ---------- card wrapper ---------- */
+const srcLine=()=>`<div class="src">출처: KB부동산 주간 시계열 · 기준일 ${lastDate()}</div>`;
+function card(title,body,{png=title,extra=''}={}){
+  return `<section class="card" data-png="${esc(png)}"><div class="hd"><h2>${esc(title)}</h2>${extra}${VIEWER?'':'<button class="btn png" data-act="png" data-png-hide>PNG 저장</button>'}</div>${body}${srcLine()}</section>`;
+}
+const seg=(name,opts,cur)=>`<div class="seg" role="group">${opts.map(([v,l])=>`<button data-seg="${name}" data-v="${esc(v)}" aria-pressed="${v==cur}">${esc(l)}</button>`).join('')}</div>`;
+/* ---------- state ---------- */
+const S={tab:'week',mapMetric:'mae',grp:'서울',localGrp:false,topMetric:'mae',period:0,topN:10,
+  cmetric:'mae',cwin:25,sel:['전국','서울','경기','6개광역시','기타지방'],colors:{},
+  g33:'서울',tsMetric:'mae',tsGrp:'서울',tsWin:33,weekGrp:'서울'};
+const SERIES_VARS=['--s1','--s2','--s3','--s4','--s5','--s6','--s7','--s8'];
+const SIDO=['전국','서울','경기','인천','부산','대구','대전','광주','울산','강원','충북','충남','세종','전북','전남','경북','경남','제주'];
+const TILE={인천:[0,0],서울:[1,0],경기:[2,0],강원:[3,0],충남:[0,1],세종:[1,1],충북:[2,1],경북:[3,1],전북:[0,2],대전:[1,2],대구:[2,2],울산:[3,2],전남:[0,3],광주:[1,3],경남:[2,3],부산:[3,3],제주:[0,4]};
+/* ---------- views ---------- */
+function sidoBars(){
+  const NW=narrow(),W=NW?Math.max(280,Math.min(560,window.innerWidth-100)):560,lm=NW?40:58,rm=NW?40:46,rh=34,top=4,h=SIDO.length*rh+top+22;
+  const vals=SIDO.flatMap(n=>[wv('mae',n,L),wv('jeon',n,L)]).filter(v=>v!=null);
+  let mn=Math.min(0,...vals),mx=Math.max(0,...vals);const tk=niceTicks(mn,mx,4);mn=tk[0];mx=tk[tk.length-1];
+  const x0=lm+(mn<0?(NW?26:34):0),x1=W-rm,X=v=>x0+(v-mn)/(mx-mn)*(x1-x0),z=X(0);
+  let g=tk.map(t=>`<line x1="${X(t)}" x2="${X(t)}" y1="${top}" y2="${h-22}" stroke="var(--line)" ${t===0?'stroke-width="1.5"':'opacity=".6"'}/><text x="${X(t)}" y="${h-6}" text-anchor="middle" font-size="11" fill="var(--muted)">${(+t.toFixed(2))}</text>`).join('');
+  SIDO.forEach((n,i)=>{
+    const y=top+i*rh;g+=`<text x="${lm-8}" y="${y+rh/2+4}" text-anchor="end" font-size="12" fill="var(--fg)">${n}</text>`;
+    [['mae','--cm',5],['jeon','--cj',18]].forEach(([k,c,dy])=>{
+      const v=wv(k,n,L);if(v==null)return;const xe=X(v),bx=Math.min(z,xe),bw=Math.max(1.5,Math.abs(xe-z)),pos=v>=0;
+      g+=`<rect x="${bx}" y="${y+dy}" width="${bw}" height="12" fill="var(${c})"/><text x="${pos?bx+bw+4:bx-4}" y="${y+dy+10}" text-anchor="${pos?'start':'end'}" font-size="11" fill="var(--fg)" style="font-variant-numeric:tabular-nums">${f2(v)}</text>`;
+    });
+  });
+  return `<svg viewBox="0 0 ${W} ${h}" width="100%" role="img" aria-label="시도별 매매·전세 증감률 막대그래프" style="display:block">${g}</svg><div style="display:flex;gap:16px;justify-content:center;margin-top:6px"><span class="lg"><i style="background:var(--cm)"></i>매매</span><span class="lg"><i style="background:var(--cj)"></i>전세</span></div>`;
+}
+function viewWeekParts(){
+  const mm=S.mapMetric;
+  let tiles='';
+  for(let y=0;y<5;y++)for(let x=0;x<4;x++){
+    const n=Object.keys(TILE).find(k=>TILE[k][0]===x&&TILE[k][1]===y);
+    if(!n){tiles+='<div class="tile e"></div>';continue}
+    const v=wv(mm,n,L);
+    tiles+=`<div class="tile" style="${mst(v)}"><span>${n}</span><b>${f2(v)}</b></div>`;
+  }
+  const rows=SIDO.map(n=>`<tr><td class="l">${n}</td>${cellM(wv('mae',n,L))}${cellM(wv('jeon',n,L))}</tr>`).join('');
+  const nat=['mae','jeon'].map(k=>wv(k,'전국',L));
+  const hero=`<div class="hero"><div><small>전국 매매 증감률(전주 대비, %)</small><strong class="${nat[0]>0?'up':nat[0]<0?'dn':''}">${f2(nat[0])}</strong></div><div><small>전국 전세 증감률(전주 대비, %)</small><strong class="${nat[1]>0?'up':nat[1]<0?'dn':''}">${f2(nat[1])}</strong></div></div>`;
+  const legend=mapLegend('증감률(전주 대비 %) · 숫자는 색 구간의 시작 경계');
+  const c1=card('전국 시도별 매매·전세 증감률',`${hero}<div class="grid2" style="gap:28px"><div class="pnl">${sidoBars()}</div><div class="tw pnl"><table class="st"><thead><tr><th class="l">지역</th><th>매매</th><th>전세</th></tr></thead><tbody>${rows}</tbody></table></div></div>`,{png:'시도별_증감률'});
+  const c1b=card('시도별 증감률 타일 지도',`${seg('mapMetric',[['mae','매매'],['jeon','전세']],mm)}<div class="tiles" style="margin:10px 0">${tiles}</div>${legend}`,{png:'시도별_타일지도'});
+  // 5-week district table
+  const groups=CFG.groups33.map(g=>[g.title,g.regions]).concat([['광역시·지방 주요 도시',CFG.local]]);
+  const cur=groups.find(g=>g[0]===S.weekGrp)||groups[0];
+  const idxs=[L-4,L-3,L-2,L-1,L];
+  const lab=['4주 전','3주 전','2주 전','1주 전','이번 주'];
+  const hc=(t,i)=>`<th>${t}<br>${md(D.dates[idxs[i]])}</th>`;
+  const head=`<tr><th class="l" rowspan="2">지역</th><th colspan="5" class="g1">매매 증감률(%)</th><th class="sp"></th><th colspan="5" class="g2">전세 증감률(%)</th></tr><tr>${lab.map(hc).join('')}<th class="sp"></th>${lab.map(hc).join('')}</tr>`;
+  const body=cur[1].map(n=>`<tr><td class="l">${esc(n)}</td>${idxs.map((i,k)=>cellM(wv('mae',n,i),k===0?'m1':k===4?'m2':'')).join('')}<td class="sp"></td>${idxs.map((i,k)=>cellM(wv('jeon',n,i),k===0?'j1':k===4?'j2':'')).join('')}</tr>`).join('');
+  const chips=`<div class="chips" style="margin-bottom:12px">${groups.map(g=>`<button class="chip" data-seg="weekGrp" data-v="${esc(g[0])}" aria-pressed="${g[0]===cur[0]}">${esc(g[0])}</button>`).join('')}</div>`;
+  const c2=card(`주간동향 · ${cur[0]} (최근 5주)`,`${chips}<div class="tw"><table class="sticky"><thead>${head}</thead><tbody>${body}</tbody></table></div>`,{png:'주간동향_'+cur[0]});
+  return {c1,c2};
+}
+function viewWeek(){return viewWeekParts().c1+viewMap()}
+function viewWk5(){return viewWeekParts().c2}
+function barSvg(arr,cap){
+  return `<div class="muted" style="font-size:12px;margin-bottom:4px">${esc(cap)}</div><div class="bars" data-cap="${esc(cap)}" data-d="${encodeURIComponent(JSON.stringify(arr.map(r=>[r.n,r.p])))}"></div>`;
+}
+function layoutBars(){
+  document.querySelectorAll('#view .bars').forEach(el=>{
+    const card=el.closest('.card'),tb=card&&card.querySelector('table');if(!tb)return;
+    const arr=JSON.parse(decodeURIComponent(el.dataset.d));
+    const trs=tb.querySelectorAll('tbody tr');if(!trs.length)return;
+    const heads=[...tb.querySelectorAll('thead th')];
+    let ci=heads.findIndex(h=>/변동/.test(h.textContent));if(ci<0)ci=heads.findIndex(h=>/이번 주|\d+주 전/.test(h.textContent));
+    const cr=el.getBoundingClientRect(),W=Math.round(cr.width);
+    const c0=trs[0].children,tdv=c0[ci].getBoundingClientRect(),tdn=c0[1].getBoundingClientRect();
+    const fs=getComputedStyle(c0[ci]).fontSize,ff=getComputedStyle(c0[ci]).fontFamily;
+    const rh=trs.length>1?trs[1].getBoundingClientRect().top-trs[0].getBoundingClientRect().top:trs[0].getBoundingClientRect().height;
+    const th=trs[0].getBoundingClientRect().height;
+    const pl=tdv.left-cr.left,nx=tdn.left-cr.left,LW=Math.ceil((Math.max(...arr.map(r=>(f2(r[1])+'%').length)))*parseFloat(fs)*0.6+14);
+    const vals=arr.map(r=>r[1]);const mn=Math.min(0,...vals),mx=Math.max(0,...vals);
+    // 플롯 영역: 왼쪽 끝=표 '이번 주' 열 왼쪽, 오른쪽 끝=카드 오른쪽
+    const a0=pl+(mn<0?LW:0),a1=W-(mx>0?LW:0);
+    const span=(mx-mn)||1,X=v=>a0+(v-mn)/span*(a1-a0),z=X(0);
+    const h=arr.length*rh+4;
+    const rows=arr.map((r,i)=>{
+      const y=2+i*rh,v=r[1],xe=X(v),bx=Math.min(z,xe),bw=Math.max(1.5,Math.abs(xe-z)),pos=v>=0,cy=y+th/2;
+      return `<text x="${nx+2}" y="${cy}" dominant-baseline="central" text-anchor="start" fill="var(--fg)" style="font-weight:500">${esc(r[0])}</text>`+
+        `<rect x="${bx}" y="${y+3}" width="${bw}" height="${th-6}" rx="3" fill="var(${pos?'--up':'--down'})"/>`+
+        `<text x="${pos?bx+bw+6:bx-6}" y="${cy}" dominant-baseline="central" text-anchor="${pos?'start':'end'}" fill="var(--fg)" style="font-variant-numeric:tabular-nums">${f2(v)}%</text>`}).join('');
+    el.innerHTML=`<svg width="${W}" height="${h}" role="img" aria-label="${esc(el.dataset.cap)}" font-size="${fs}" font-family="${ff.replace(/"/g,"'")}" style="display:block;margin-bottom:12px"><line x1="${z}" x2="${z}" y1="0" y2="${h}" stroke="var(--line)" stroke-width="1.5"/>${rows}</svg>`;
+  });
+}
+let __nw=narrow(),__w=window.innerWidth;window.addEventListener('resize',()=>{clearTimeout(window.__lb);window.__lb=setTimeout(()=>{if(window.innerWidth!==__w&&(narrow()!==__nw||narrow())){__nw=narrow();__w=window.innerWidth;render()}else layoutBars()},120)});
+function viewTop(){
+  const P=PERIODS[S.period],[a,b]=P[1]();
+  const mk=S.topMetric,ik=mk==='mae'?'maeIdx':'jeonIdx';
+  const items=CFG.pool.map(n=>{const c=IX.get(n);const x0=D[ik][c][a],x1=D[ik][c][b];return {n,p:(x0==null||x1==null||!x0)?null:(x1-x0)/x0*100}}).filter(r=>r.p!=null);
+  const off=P[0]==='지난 주'?1:0;const N=S.topN,idxs=[0,1,2,3,4].map(k=>L-off-k);const dupP=P[0]==='이번 주'||P[0]==='지난 주';
+  const up=[...items].sort((p,q)=>q.p-p.p).slice(0,N),dn=[...items].sort((p,q)=>p.p-q.p).slice(0,N);
+  const tbl=arr=>`<div class="tw"><table><thead><tr><th></th><th class="l">지역</th>${dupP?'':`<th>${P[0]} 변동(%)</th>`}${idxs.map((i,k)=>`<th>${k+off===0?'이번 주':(k+off)+'주 전'}<br>${md(D.dates[i])}</th>`).join('')}</tr></thead><tbody>${arr.map((r,k)=>`<tr><td class="rk">${k+1}</td><td class="l">${esc(r.n)}</td>${dupP?'':cell(r.p,6)}${idxs.map(i=>cellM(wv(mk,r.n,i))).join('')}</tr>`).join('')}</tbody></table></div>`;
+  const nm=mk==='mae'?'매매':'전세';
+  const ctl=`<div class="ctl">${seg('topMetric',[['mae','매매'],['jeon','전세']],mk)}<select class="btn" id="period" aria-label="기간">${PERIODS.map((p,i)=>`<option value="${i}" ${i===S.period?'selected':''}>${p[0]}</option>`).join('')}</select>${seg('topN',[[5,'Top 5'],[10,'Top 10']],S.topN)}<span class="muted">${dot(D.dates[a])} → ${dot(D.dates[b])} 지수 변동률 기준, 대상 ${items.length}개 시군구</span></div>`;
+  const cap=P[0]+' 지수 변동률(%)';
+  return `<div class="card">${ctl}<div class="muted" style="font-size:12px">순위는 KB 지수의 기간 변동률(%)로 매기고, 표의 5주 값은 해당 지역의 주간 증감률(%)입니다. 이번 주·지난 주 기준일 때는 변동률이 해당 주(첫 열)의 증감률과 같아 별도 열을 생략하며, 지난 주 기준일 때 표는 지난 주부터 5주를 보여줍니다.</div></div>`+
+    `<div class="grid2">${card(nm+' 상승 지역 Top '+N+' · '+P[0],barSvg(up,cap)+tbl(up),{png:nm+'_상승_'+P[0]})}${card(nm+' 하락 지역 Top '+N+' · '+P[0],barSvg(dn,cap)+tbl(dn),{png:nm+'_하락_'+P[0]})}</div>`;
+}
+const CMET={mae:['매매 증감률(%)','w','mae'],jeon:['전세 증감률(%)','w','jeon'],
+  mae_s:['매수우위지수','s','mae_s'],jeon_s:['전세수급지수','s','jeon_s'],mae_t:['매매거래지수','s','mae_t'],jeon_t:['전세거래지수','s','jeon_t']};
+const PRESETS=[['전국·수도권·권역',['전국','서울','경기','6개광역시','기타지방']],['인천·광역시',['인천','부산','대구','대전','광주','울산']],['세종·충청·경상',['세종','충북','충남','경북','경남']],['전라·강원·제주',['전북','전남','강원','제주']]];
+const CREG=['전국','서울','경기','6개광역시','기타지방','인천','부산','대구','대전','광주','울산','세종','충북','충남','경북','경남','전북','전남','강원','제주'];
+function colorFor(n){
+  if(S.colors[n])return S.colors[n];
+  const used=new Set(Object.values(S.colors));
+  const free=SERIES_VARS.find(v=>!used.has(v));S.colors[n]=free||SERIES_VARS[0];return S.colors[n];
+}
+function cseries(){
+  const [,kind,key]=CMET[S.cmetric];
+  const dates=kind==='w'?D.dates:D.sdates,n=dates.length,a=Math.max(0,n-S.cwin);
+  const ds=dates.slice(a);
+  const series=S.sel.filter(r=>kind==='w'?IX.has(r):SX.has(r)).map(r=>({name:r,color:`var(${colorFor(r)})`,
+    vals:ds.map((_,i)=>kind==='w'?wv(key,r,a+i):sv(key,r,2,a+i))}));
+  return {ds,series,kind};
+}
+function viewChart(){
+  const meta=CMET[S.cmetric];
+  const {ds,series,kind}=cseries();
+  const chips=CREG.map(r=>{
+    const on=S.sel.includes(r);const lv=series.find(s=>s.name===r);
+    const last=lv?lv.vals[lv.vals.length-1]:null;
+    return `<button class="chip" data-act="reg" data-v="${esc(r)}" aria-pressed="${on}"><i style="${on?`background:var(${colorFor(r)})`:''}"></i>${esc(r)}${on?` <b>${kind==='w'?f2(last):f1(last)}</b>`:''}</button>`}).join('');
+  const same=p=>p.length===S.sel.length&&p.every(r=>S.sel.includes(r));
+  const presets=`<div class="presets"><span>지역 묶음</span>${PRESETS.map((p,i)=>`<button class="chip" data-act="preset" data-v="${i}" aria-pressed="${same(p[1])}">${esc(p[0])}</button>`).join('')}<button class="chip" data-act="clearsel" ${S.sel.length?'':'disabled'} style="${S.sel.length?'':'opacity:.45;cursor:default'}">✕ 선택 해제</button></div>`;
+  const ctl=`<div class="ctl">${seg('cmetric',[['mae','매매증감'],['jeon','전세증감'],['mae_s','매매심리'],['jeon_s','전세심리'],['mae_t','매매거래'],['jeon_t','전세거래']],S.cmetric)}${seg('cwin',[[13,'3개월'],[25,'6개월'],[52,'1년'],[104,'2년'],[9999,'전체']],S.cwin)}</div>`;
+  const hint=kind==='s'?'<div class="muted" style="font-size:12px;margin-bottom:8px">KB 부동산 시장 심리 조사 지수(100 기준 아님, 지수 자체 정의 확인 필요). 최대 8개 지역까지 비교됩니다.</div>':'<div class="muted" style="font-size:12px;margin-bottom:8px">최대 8개 지역까지 비교됩니다.</div>';
+  const rowsHead=`<tr><th class="l">지역</th>${ds.slice(-8).map(d=>`<th>${md(d)}</th>`).join('')}</tr>`;
+  const rowsBody=series.map(s=>`<tr><td class="l"><i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${s.color};margin-right:6px"></i>${esc(s.name)}</td>${s.vals.slice(-8).map(v=>kind==='w'?cellM(v):`<td>${f1(v)}</td>`).join('')}</tr>`).join('');
+  const body=`${ctl}${presets}<div class="chips" style="margin-bottom:12px">${chips}</div>${hint}<div class="chart" id="chartHost"></div><div class="tw" style="margin-top:12px"><table><thead>${rowsHead}</thead><tbody>${rowsBody}</tbody></table></div>`;
+  return card(meta[0]+' 추이',body,{png:meta[0]+'_추이'});
+}
+function view33(){
+  const gs=CFG.groups33,cur=gs.find(g=>g.title===S.g33)||gs[0];
+  const chips=`<div class="chips" style="margin-bottom:12px">${gs.map(g=>`<button class="chip" data-seg="g33" data-v="${esc(g.title)}" aria-pressed="${g.title===cur.title}">${esc(g.title)}</button>`).join('')}</div>`;
+  const idxs=[L-4,L-3,L-2,L-1,L];
+  const mk=k=>{
+    const ik=k==='mae'?'maeIdx':'jeonIdx';
+    const rows=cur.regions.map((n,ri)=>`<tr class="${ri===0?'sub':''}"><td class="l">${esc(n)}</td>${idxs.map(i=>cellM(wv(k,n,i))).join('')}<td class="sb" style="background:none">${sparkBars(wrow(k,n,L-13,L),76)}</td><td style="background:none">${sparkLine(wrow(ik,n,L-13,L),76)}</td></tr>`).join('');
+    return `<div class="tw"><table><thead><tr><th class="l">지역</th>${idxs.map(i=>`<th>${md(D.dates[i])}</th>`).join('')}<th class="sb" style="white-space:normal;line-height:1.2">3개월<br>증감 흐름</th><th style="white-space:normal;line-height:1.2">3개월<br>시세 흐름</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  };
+  return `<div class="card">${chips}${mapLegend('증감률(전주 대비 %) · 숫자는 색 구간의 시작 경계')}<div class="muted" style="font-size:12px">증감 흐름은 최근 14주 주간 증감률(주황 상승·파랑 하락), 시세 흐름은 같은 기간 KB 지수입니다.</div></div><div class="grid2">${card(cur.title+' 매매 증감률',mk('mae'),{png:cur.title+'_매매'})}${card(cur.title+' 전세 증감률',mk('jeon'),{png:cur.title+'_전세'})}</div>`;
+}
+function viewTs(){
+  const gs=CFG.groups33.map(g=>[g.title,g.regions]).concat([['광역시·지방 주요 도시',CFG.local],['시도',SIDO]]);
+  const cur=gs.find(g=>g[0]===S.tsGrp)||gs[0];
+  const a=L-S.tsWin+1,idxs=[];for(let i=a;i<=L;i++)idxs.push(i);
+  const chips=`<div class="chips" style="margin-bottom:12px">${gs.map(g=>`<button class="chip" data-seg="tsGrp" data-v="${esc(g[0])}" aria-pressed="${g[0]===cur[0]}">${esc(g[0])}</button>`).join('')}</div>`;
+  const ctl=`<div class="ctl">${seg('tsMetric',[['mae','매매증감'],['jeon','전세증감']],S.tsMetric)}${seg('tsWin',[[13,'13주'],[33,'33주'],[52,'52주']],S.tsWin)}</div>`;
+  const th=idxs.map(i=>`<th>${md(D.dates[i])}</th>`).join('');
+  const rows=cur[1].map(n=>`<tr><td class="l">${esc(n)}</td>${idxs.map(i=>cellM(wv(S.tsMetric,n,i))).join('')}</tr>`).join('');
+  const nm=S.tsMetric==='mae'?'매매':'전세';
+  return card(`${nm}증감 시계열 · ${cur[0]}`,`${ctl}${chips}${mapLegend('증감률(전주 대비 %) · 숫자는 색 구간의 시작 경계')}<div class="tw"><table class="sticky"><thead><tr><th class="l">지역</th>${th}</tr></thead><tbody>${rows}</tbody></table></div>`,{png:nm+'증감_시계열_'+cur[0]});
+}
+/* ---------- data tab / upload ---------- */
+let LOG=[];
+function viewData(){
+  const warn=D._src==='upload'?`<div class="note ok">이 브라우저에 저장된 업데이트 데이터를 사용 중입니다(${dot(lastDate())}). [지금 게시]를 해야 공유용 대시보드에 반영됩니다. <button class="btn" data-act="reset">게시된 데이터로 되돌리기</button></div>`:'';
+  const logs=LOG.map(l=>`<div class="note ${l.t}">${l.h}</div>`).join('');
+  return `${warn}<section class="card"><div class="hd"><h2>KB 주간시계열 업데이트</h2></div>
+  <p style="margin-top:0">KB부동산이 매주 제공하는 <b>주간시계열 엑셀(.xlsx)</b>을 그대로 올리세요. 이 파일은 2008년부터의 전체 이력을 담고 있어, 기존 시트에 한 주씩 붙여 넣는 작업이 필요 없습니다. 파일의 8개 탭(매매증감·전세증감·매매지수·전세지수·매수우위·매매거래활발·전세수급·전세거래활발)을 읽어 데이터를 통째로 교체합니다.</p>
+  <div class="ctl"><input type="file" id="file" accept=".xlsx" class="btn"><span class="muted" id="fstat"></span></div>${logs}
+  <div class="muted" style="font-size:12px">KB 파일의 열 구성(지역 이름과 순서)이 앱에 내장된 것과 다르면 업데이트를 중단하고 어느 열이 다른지 알려줍니다. 열이 바뀐 상태로 계산하면 지역이 뒤바뀌기 때문입니다.</div></section>
+  ${ghCard()}<section class="card"><div class="hd"><h2>현재 데이터</h2></div><div class="tw"><table><tbody>
+   <tr><td class="l">주간 시계열(증감·지수)</td><td>${dot(D.dates[0])} ~ ${dot(D.dates[L])}</td><td>${W}주 · ${D.names.length}개 열</td></tr>
+   <tr><td class="l">시장 심리(수급·거래)</td><td>${dot(D.sdates[0])} ~ ${dot(D.sdates[D.sdates.length-1])}</td><td>${D.sdates.length}주 · ${D.sgroups.length}개 지역</td></tr></tbody></table></div>
+  <div class="note warn" style="margin-top:12px"><b>광주·전남 참고</b>: KB 파일에는 '전남광주통합특별시' 열과 '(구)광주광역시', '(구)전라남도' 열이 함께 있습니다. 이 앱의 '광주'·'전남'은 기존 시트와 같이 (구) 열을 가리킵니다. 통합 열은 '전남광주통합특별시'로 별도 보관되며 화면에는 아직 쓰지 않습니다.</div></section>`;
+}
+function bindData(){
+  const f=$('#file');if(!f)return;
+  f.addEventListener('change',async()=>{
+    const file=f.files[0];if(!file)return;
+    LOG=[];$('#fstat').textContent='읽는 중…';
+    try{
+      if(!window.XLSX)throw new Error('엑셀 읽기 라이브러리를 불러오지 못했습니다. 네트워크를 확인하세요.');
+      const wb=XLSX.read(await file.arrayBuffer(),{type:'array'});
+      const res=parseKB(wb);
+      if(res.errors.length){LOG.push({t:'err',h:'<b>업데이트하지 않았습니다.</b><ul>'+res.errors.slice(0,12).map(e=>'<li>'+esc(e)+'</li>').join('')+'</ul>'});}
+      else{
+        const old=BASE_LAST;
+        if(res.D.dates[res.D.dates.length-1]<lastDate())LOG.push({t:'warn',h:'올린 파일의 기준일('+res.D.dates[res.D.dates.length-1]+')이 현재 데이터('+lastDate()+')보다 앞섭니다. 그래도 교체했습니다.'});
+        res.D._src='upload';D=res.D;setup();saveIDB(D);
+        LOG.push({t:'ok',h:'<b>업데이트 완료</b>: 기준일 '+lastDate()+', '+W+'주 이력. '+(res.notes.length?'<ul>'+res.notes.map(e=>'<li>'+esc(e)+'</li>').join('')+'</ul>':'')});
+        asof();
+        if(GH.get('token'))await doPublish();
+        else PUB={t:'warn',h:'공유용 대시보드에는 아직 반영되지 않았습니다. 사용자명·저장소·토큰을 저장한 뒤 [지금 게시]를 누르세요.'};
+      }
+    }catch(e){LOG.push({t:'err',h:'<b>읽기 실패</b>: '+esc(e.message||e)})}
+    render();
+  });
+}
+function serialToDate(s){return new Date(Math.round((s-25569)*86400000)).toISOString().slice(0,10)}
+function parseKB(wb){
+  const errors=[],notes=[];
+  const find=(a,b)=>wb.Sheets[a]||wb.Sheets[b];
+  const rd=ws=>XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:null});
+  const out={names:D.names,kbhead:D.kbhead,cols:D.cols,sgroups:D.sgroups,skb:D.skb};
+  const W4=[['mae','1.매매증감'],['jeon','2.전세증감'],['maeIdx','3.매매지수'],['jeonIdx','4.전세지수']];
+  let dates=null;
+  W4.forEach(([k,sn])=>{
+    const ws=find(sn,sn.replace(/^\d\./,''));if(!ws){errors.push(`'${sn}' 탭이 없습니다.`);return}
+    const R=rd(ws),H=R[1]||[];
+    const rows=R.filter(r=>typeof r[0]==='number'&&r[0]>30000);
+    const ds=rows.map(r=>serialToDate(r[0]));
+    if(!dates)dates=ds;else if(JSON.stringify(dates)!==JSON.stringify(ds))errors.push(`'${sn}' 탭의 날짜가 '1.매매증감' 탭과 다릅니다.`);
+    let bad=0;
+    D.cols.forEach((c,i)=>{const h=H[c]==null?'':String(H[c]).trim();if(h!==D.kbhead[i]){bad++;if(bad<=4)errors.push(`'${sn}' ${c+1}번째 열 이름이 다릅니다: 기대 '${D.kbhead[i]}' / 실제 '${h}'`)}});
+    if(bad>4)errors.push(`'${sn}'에서 총 ${bad}개 열 이름이 내장 구성과 다릅니다.`);
+    out[k]=D.cols.map(c=>rows.map(r=>typeof r[c]==='number'?Math.round(r[c]*1000):null));
+  });
+  const S4=[['mae_s','5.매수우위'],['mae_t','6.매매거래활발'],['jeon_s','7.전세수급'],['jeon_t','8.전세거래활발']];
+  let sd=null;
+  S4.forEach(([k,sn])=>{
+    const ws=find(sn,sn.replace(/^\d\./,''));if(!ws){errors.push(`'${sn}' 탭이 없습니다.`);return}
+    const R=rd(ws),H=R[1]||[];
+    const rows=R.filter(r=>typeof r[0]==='number'&&r[0]>30000);
+    const ds=rows.map(r=>serialToDate(r[0]));
+    if(!sd)sd=ds;else if(JSON.stringify(sd)!==JSON.stringify(ds))errors.push(`'${sn}' 탭의 날짜가 다른 심리 탭과 다릅니다.`);
+    const gs=[];H.forEach((v,j)=>{if(j>0&&v!=null&&String(v).trim())gs.push(j)});
+    if(gs.length!==D.skb.length){errors.push(`'${sn}' 지역 수가 다릅니다: 기대 ${D.skb.length}개 / 실제 ${gs.length}개`);return}
+    let bad=0;gs.forEach((j,i)=>{const h=String(H[j]).split('\n')[0].split('  ')[0].trim();if(h!==D.skb[i]){bad++;if(bad<=4)errors.push(`'${sn}' ${i+1}번째 지역 이름이 다릅니다: 기대 '${D.skb[i]}' / 실제 '${h}'`)}});
+    out[k]=gs.map(j=>[0,1,2].map(q=>rows.map(r=>typeof r[j+q]==='number'?Math.round(r[j+q]*100):null)));
+  });
+  out.dates=dates||[];out.sdates=sd||[];
+  if(!errors.length){
+    const nOld=D.dates.length,nNew=out.dates.length;
+    notes.push(`주간 이력 ${nOld}주 → ${nNew}주 (${nNew-nOld>=0?'+':''}${nNew-nOld}주)`);
+    const lastNull=D.names.filter((_,i)=>out.mae[i][nNew-1]==null);
+    if(lastNull.length)notes.push(`최신 주 매매증감이 비어 있는 열: ${lastNull.slice(0,6).join(', ')}${lastNull.length>6?' 외':''}`);
+  }
+  return {D:out,errors,notes};
+}
+/* ---------- publish to shared dashboard (GitHub) ---------- */
+const GH={get(k){try{return localStorage.getItem('kbGh_'+k)||''}catch(e){return ''}},set(k,v){try{localStorage.setItem('kbGh_'+k,v)}catch(e){}}};
+function ghGuess(){
+  const m=location.hostname.match(/^([^.]+)\.github\.io$/),seg=location.pathname.split('/')[1]||'';
+  return {owner:GH.get('owner')||(m?m[1]:''),repo:GH.get('repo')||(m?(seg&&!seg.includes('.')?seg:m[0]):'')};
+}
+function b64(str){const u=new TextEncoder().encode(str);let s='';for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s)}
+async function ghApi(path,opt={}){
+  const {owner,repo}=ghGuess();
+  const r=await fetch(`https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}${path}`,{...opt,headers:{'Accept':'application/vnd.github+json','Authorization':'Bearer '+GH.get('token'),'X-GitHub-Api-Version':'2022-11-28'}});
+  if(!r.ok){let m='';try{m=(await r.json()).message||''}catch(e){}
+    throw new Error(r.status===401?'토큰이 올바르지 않거나 만료되었습니다.':r.status===404?'저장소를 찾을 수 없거나 토큰에 이 저장소 권한이 없습니다.':r.status===403?'토큰에 쓰기 권한(Contents: Read and write)이 없습니다. '+m:r.status+' '+m)}
+  return r.json();
+}
+async function publish(){
+  const {owner,repo}=ghGuess();
+  if(!owner||!repo||!GH.get('token'))throw new Error('GitHub 사용자명, 저장소 이름, 토큰을 먼저 저장하세요.');
+  const br=(await ghApi('')).default_branch;
+  const tree=await ghApi('/git/trees/'+encodeURIComponent(br));
+  const cur=tree.tree.find(x=>x.path==='data.json');
+  const out=Object.assign({},D);delete out._src;
+  await ghApi('/contents/data.json',{method:'PUT',body:JSON.stringify({message:'데이터 업데이트 '+lastDate(),content:b64(JSON.stringify(out)),branch:br,sha:cur?cur.sha:undefined})});
+}
+let PUB=null;
+async function doPublish(){
+  PUB={t:'warn',h:'공유용 대시보드에 게시 중… (파일이 커서 10~30초 걸릴 수 있습니다)'};render();
+  try{await publish();PUB={t:'ok',h:`<b>게시 완료</b>: 기준일 ${lastDate()}. 1~2분 뒤 공유용 대시보드에 반영됩니다.`}}
+  catch(e){PUB={t:'err',h:'<b>게시 실패</b>: '+esc(e.message||e)}}
+  render();
+}
+function ghCard(){
+  const g=ghGuess(),has=!!GH.get('token');
+  return `<section class="card"><div class="hd"><h2>공유용 대시보드에 게시</h2></div>
+  <p style="margin-top:0">엑셀을 올리면 공유용 대시보드의 데이터도 자동으로 교체됩니다. 처음 한 번만 아래에 GitHub 사용자명·저장소 이름·토큰을 저장하세요. 토큰은 이 브라우저에만 저장됩니다.</p>
+  <div class="ctl"><input class="btn" id="ghOwner" placeholder="GitHub 사용자명" value="${esc(g.owner)}" style="width:150px;cursor:text"><input class="btn" id="ghRepo" placeholder="저장소 이름" value="${esc(g.repo)}" style="width:150px;cursor:text"><input class="btn" id="ghToken" type="password" autocomplete="off" placeholder="${has?'토큰 저장됨 (바꾸려면 새로 입력)':'GitHub 토큰'}" style="width:250px;cursor:text"><button class="btn" data-act="ghsave">저장</button><button class="btn pri" data-act="ghpub">지금 게시</button></div>${PUB?`<div class="note ${PUB.t}" style="margin:0">${PUB.h}</div>`:''}</section>`;
+}
+/* ---------- IndexedDB persistence (per browser) ---------- */
+function idb(){return new Promise((res,rej)=>{try{const r=indexedDB.open('kb-series',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}})}
+async function saveIDB(d){try{const db=await idb();db.transaction('kv','readwrite').objectStore('kv').put(d,'data')}catch(e){}}
+async function loadIDB(){try{const db=await idb();return await new Promise(res=>{const q=db.transaction('kv').objectStore('kv').get('data');q.onsuccess=()=>res(q.result||null);q.onerror=()=>res(null)})}catch(e){return null}}
+async function clearIDB(){try{const db=await idb();db.transaction('kv','readwrite').objectStore('kv').delete('data')}catch(e){}}
+/* ---------- PNG export ---------- */
+async function capturePng(secEl){
+  const hide=secEl.querySelectorAll('[data-png-hide]');hide.forEach(e=>e.style.visibility='hidden');
+  try{
+    const cv=await html2canvas(secEl,{backgroundColor:getComputedStyle(document.body).backgroundColor,scale:2,useCORS:true});
+    return await new Promise(r=>cv.toBlob(r,'image/png'));
+  }finally{hide.forEach(e=>e.style.visibility='')}
+}
+async function savePng(secEl){
+  if(!window.html2canvas){alert_('이미지 변환 라이브러리를 불러오지 못했습니다.');return}
+  try{
+    const blob=await capturePng(secEl);
+    const name=(secEl.dataset.png||'table').replace(/[\\/:*?"<>|\s]+/g,'_')+'_'+lastDate()+'.png';
+    await deliver(blob,name);
+  }catch(e){alert_('이미지 변환에 실패했습니다: '+(e.message||e))}
+}
+async function deliver(blob,name){
+  const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),10000);
+}
+const nextFrame=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(()=>setTimeout(r,40))));
+async function exportAll(){
+  if(!window.html2canvas||!window.JSZip){alert_('이미지 변환 라이브러리를 불러오지 못했습니다.');return}
+  const safe=t=>String(t).replace(/[\\/:*?"<>|\s]+/g,'_');
+  const snap=JSON.parse(JSON.stringify(S));
+  const jobs=[];
+  const cardBy=(png)=>[...document.querySelectorAll('#view .card[data-png]')].find(c=>c.dataset.png===png);
+  jobs.push({set:{tab:'week'},cards:[['시도별_증감률','전국_시도별_매매전세_증감률'],['주간동향_수도권','수도권_주간동향'],['주간동향_광역시지방','광역시_지방_주간동향']]});
+  jobs.push({set:{tab:'top',topMetric:'mae',period:0,topN:10},cards:[['매매_상승_이번 주','매매_상승_Top10_이번주'],['매매_하락_이번 주','매매_하락_Top10_이번주']]});
+  jobs.push({set:{tab:'top',topMetric:'jeon',period:0,topN:10},cards:[['전세_상승_이번 주','전세_상승_Top10_이번주'],['전세_하락_이번 주','전세_하락_Top10_이번주']]});
+  PRESETS.forEach(p=>['mae','jeon'].forEach(k=>jobs.push({set:{tab:'chart',cmetric:k,sel:[...p[1]],colors:{}},one:`증감심리_${p[0].replace(/[\\/:*?"<>|\s]+/g,'_')}_${k==='mae'?'매매증감':'전세증감'}`})));
+  CFG.groups33.forEach(g=>jobs.push({set:{tab:'c33',g33:g.title},idx:[['_매매','매매'],['_전세','전세']],g:g.title}));
+  let total=0;jobs.forEach(j=>total+=j.cards?j.cards.length:j.idx?2:1);
+  let ov=$('#expov');if(!ov){ov=document.createElement('div');ov.id='expov';ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:30;display:flex;align-items:center;justify-content:center';document.body.appendChild(ov)}
+  ov.hidden=false;
+  const prog=(n,msg)=>{ov.innerHTML=`<div class="card" style="min-width:260px;max-width:90vw;text-align:center"><b>이미지 생성 중 ${n} / ${total}</b><div style="height:6px;background:var(--cell);border-radius:3px;margin:10px 0"><div style="height:6px;width:${n/total*100}%;background:var(--cm);border-radius:3px"></div></div><div class="muted" style="font-size:12px">${esc(msg||'')}</div></div>`};
+  const zip=new JSZip(),d=lastDate();let n=0,fail=0;
+  const add=async(card,name)=>{
+    n++;prog(n,name);
+    if(!card){fail++;return}
+    try{const blob=await capturePng(card);zip.file(String(n).padStart(2,'0')+'_'+name+'.png',blob)}catch(e){fail++}
+  };
+  try{
+    for(const j of jobs){
+      Object.assign(S,j.set);render();await nextFrame();
+      if(j.cards){for(const [png,name] of j.cards)await add(cardBy(png),name)}
+      else if(j.idx){const cs=[...document.querySelectorAll('#view .grid2>.card')];for(let i=0;i<2;i++)await add(cs[i],'33차트_'+safe(j.g)+j.idx[i][0])}
+      else await add(document.querySelector('#view .card[data-png]'),j.one);
+    }
+    prog(total,'ZIP 파일 만드는 중…');
+    const blob=await zip.generateAsync({type:'blob'});
+    Object.keys(S).forEach(k=>delete S[k]);Object.assign(S,snap);render();
+    ov.hidden=true;
+    await deliver(blob,`KB부동산_이미지_${d}.zip`);
+    if(fail)alert_(`${fail}개 이미지는 만들지 못했습니다.`);
+  }catch(e){
+    Object.keys(S).forEach(k=>delete S[k]);Object.assign(S,snap);render();ov.hidden=true;
+    alert_('일괄 저장에 실패했습니다: '+(e.message||e));
+  }
+}
+function alert_(m){let t=$('#toast');if(!t){t=document.createElement('div');t.id='toast';t.className='note err';t.style.cssText='position:fixed;left:16px;right:16px;bottom:16px;z-index:9;max-width:520px;margin:auto';document.body.appendChild(t)}t.textContent=m;t.hidden=false;setTimeout(()=>t.hidden=true,4000)}
+function showImg(url,name){let o=$('#imgov');if(!o){o=document.createElement('div');o.id='imgov';o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:20;overflow:auto;padding:16px';o.addEventListener('click',()=>o.hidden=true);document.body.appendChild(o)}o.hidden=false;o.innerHTML=`<div class="note" style="max-width:900px;margin:0 auto 8px">이미지를 길게 누르거나 우클릭해서 저장하세요 · ${esc(name)}</div><img src="${url}" style="display:block;margin:auto;max-width:100%;background:#fff">`}
+/* ---------- shell ---------- */
+function mbin(v){
+  const t=k=>[`var(--${k})`,`var(--${k}f)`];
+  if(v==null)return ['var(--cell)','var(--muted)'];
+  if(v>=0.8)return t('bu6');
+  if(v>=0.6)return t('bu5');
+  if(v>=0.4)return t('bu4');
+  if(v>=0.2)return t('bu3');
+  if(v>=0.1)return t('bu2');
+  if(v>0.05)return t('bu1');
+  if(v>=-0.05)return ['var(--cell)','var(--fg)'];
+  if(v>-0.1)return t('bd1');
+  if(v>-0.2)return t('bd2');
+  if(v>-0.4)return t('bd3');
+  if(v>-0.6)return t('bd4');
+  if(v>-0.8)return t('bd5');
+  return t('bd6');
+}
+function mst(v){const [bg,fg]=mbin(v);return `background:${bg};color:${fg}`}
+const cellM=(v,c='')=>`<td class="h ${c}" style="${mst(v)}">${f2(v)}</td>`;
+function mapLegend(extra){
+  const sw=[[-0.9,'≤-0.8'],[-0.7,'-0.6'],[-0.5,'-0.4'],[-0.3,'-0.2'],[-0.15,'-0.1'],[-0.07,'-0.05'],[0,'±0.05'],[0.07,'0.05'],[0.15,'0.1'],[0.3,'0.2'],[0.5,'0.4'],[0.7,'0.6'],[0.9,'0.8≤']];
+  return `<div class="legend" style="flex-wrap:wrap;margin-bottom:10px"><span>하락</span>${sw.map(([v,t])=>`<span class="sw" style="${mst(v)}">${t}</span>`).join('')}<span>상승</span><span style="margin-left:8px">${extra}</span></div>`;
+}
+function mapExample(){
+  return (()=>{const m=wv('mae','서울',L),j=wv('jeon','서울',L),[mb,mf]=mbin(m),[jb,jf]=mbin(j);
+    return `<div class="mex"><div class="mt" style="width:84px;height:66px"><div class="mn">서울</div><div style="background:${mb};color:${mf}">${f2(m)}</div><div style="background:${jb};color:${jf}">${f2(j)}</div></div><ul><li><b>1행</b> 지역명</li><li><b>2행</b> 매매 증감률(전주 대비 %)</li><li><b>3행</b> 전세 증감률(전주 대비 %)</li></ul><span class="muted">← 읽는 법 (예: 서울)</span></div>`})();
+}
+function mapCard(title,blocks,png,noEx){
+  const r0=Math.min(...blocks.map(b=>b.r));
+  const rows=Math.max(...blocks.map(b=>b.r))-r0+3;
+  const tiles=blocks.map(b=>{
+    const m=wv('mae',b.n,L),j=wv('jeon',b.n,L),[mb,mf]=mbin(m),[jb,jf]=mbin(j);
+    return `<div class="mt" style="grid-column:${b.c-5};grid-row:${b.r-r0+1}/span 3"><div class="mn">${esc(b.n)}</div><div style="background:${mb};color:${mf}">${f2(m)}</div><div style="background:${jb};color:${jf}">${f2(j)}</div></div>`}).join('');
+  const ex=noEx?'':mapExample();
+  const legend=mapLegend(`각 칸: 지역 / 매매 / 전세 (전주 대비 %, 기준일 ${lastDate()}) · 숫자는 색 구간의 시작 경계`);
+  return card(title,`${ex}${legend}<div class="tw"><div class="mapgrid" style="grid-template-rows:repeat(${rows},21px)">${tiles}</div></div>`,{png});
+}
+const SIDO_OF=(()=>{const m={};CFG.groups33.forEach(g=>g.regions.forEach(n=>{m[n]=/^경기/.test(g.title)?'경기':g.title}));m['제주']='제주';m['세종']='세종';['춘천','강릉','원주'].forEach(n=>m[n]='강원');return m})();
+const SIDO_ORDER=['서울','경기','인천','세종','부산','대구','광주','대전','울산','강원','충북','충남','전북','전남','경북','경남','제주'];
+function mapTile(b){
+  const m=wv('mae',b.n,L),j=wv('jeon',b.n,L),[mb,mf]=mbin(m),[jb,jf]=mbin(j);
+  return `<div class="mt" style="height:66px"><div class="mn">${esc(b.n)}</div><div style="background:${mb};color:${mf}">${f2(m)}</div><div style="background:${jb};color:${jf}">${f2(j)}</div></div>`;
+}
+function mapMobile(){
+  const ord={};let oi=0;CFG.groups33.forEach(g=>g.regions.forEach(n=>{if(!(n in ord))ord[n]=oi++}));
+  const all=[...CFG.mapA,...CFG.mapB].slice().sort((p,q)=>(ord[p.n]??999)-(ord[q.n]??999));
+  const by={};all.forEach(b=>{const k=SIDO_OF[b.n]||'기타';(by[k]=by[k]||[]).push(b)});
+  const keys=SIDO_ORDER.filter(k=>by[k]).concat(Object.keys(by).filter(k=>!SIDO_ORDER.includes(k)));
+  const secs=keys.map(k=>`<div class="sd"><h3>${esc(k)}</h3><div class="mtg">${by[k].map(mapTile).join('')}</div></div>`).join('');
+  const legend=mapLegend(`각 칸: 지역 / 매매 / 전세 (전주 대비 %, 기준일 ${lastDate()})`);
+  return card('지역 동향 · 시·도별',`${mapExample()}${legend}${secs}`,{png:'주간동향_시도별'});
+}
+function viewMap(){if(narrow())return mapMobile();return mapCard('수도권 주간 동향',CFG.mapA,'주간동향_수도권')+mapCard('광역시 및 지방 주요 도시 주간 동향',CFG.mapB,'주간동향_광역시지방')}
+const TABS=[['week','주간동향',viewWeek],['wk5','지역별 5주 흐름',viewWk5],['top','증감 상위',viewTop],['chart','증감·심리',viewChart],['c33','33차트',view33],['ts','시계열',viewTs],['data','데이터 업데이트',viewData]].filter(t=>!(VIEWER&&t[0]==='data'));
+function asof(){$('#asof').textContent=`기준일 ${lastDate()} · KB부동산 주간 시계열${D._src==='upload'?' · 업로드 데이터':''}`}
+function render(){
+  $('#tabs').innerHTML=TABS.map(t=>`<button role="tab" data-tab="${t[0]}" aria-selected="${t[0]===S.tab}">${t[1]}</button>`).join('');
+  const t=TABS.find(x=>x[0]===S.tab)||TABS[0];
+  $('#view').innerHTML=t[2]();
+  if(S.tab==='chart'){const {ds,series,kind}=cseries();lineChart($('#chartHost'),{dates:ds,series,fmt:kind==='w'?f2:f1,zero:kind==='w',h:340})}
+  if(S.tab==='data')bindData();
+  if(S.tab==='top')layoutBars();
+  const p=$('#period');if(p)p.addEventListener('change',()=>{S.period=+p.value;render()});
+  try{history.replaceState(null,'','#'+S.tab)}catch(e){}
+}
+document.addEventListener('click',e=>{
+  const tb=e.target.closest('[data-tab]');if(tb){S.tab=tb.dataset.tab;render();return}
+  const sg=e.target.closest('[data-seg]');
+  if(sg){const k=sg.dataset.seg;let v=sg.dataset.v;if(['cwin','topN','tsWin'].includes(k))v=+v;S[k]=v;render();return}
+  const ac=e.target.closest('[data-act]');if(!ac)return;
+  const a=ac.dataset.act;
+  if(a==='reg'){const r=ac.dataset.v,i=S.sel.indexOf(r);
+    if(i>=0){S.sel.splice(i,1);delete S.colors[r]}else if(S.sel.length<8){S.sel.push(r)}else alert_('최대 8개 지역까지 선택할 수 있습니다.');
+    render()}
+  if(a==='clearsel'){S.sel=[];S.colors={};render();return}
+  if(a==='preset'){const p=PRESETS[+ac.dataset.v];S.sel=[...p[1]];S.colors={};render()}
+  if(a==='png')savePng(ac.closest('.card'));
+  if(a==='reset'){clearIDB().then(()=>location.reload())}
+  if(a==='ghsave'){GH.set('owner',$('#ghOwner').value.trim());GH.set('repo',$('#ghRepo').value.trim());const t=$('#ghToken').value.trim();if(t)GH.set('token',t);PUB={t:'ok',h:'저장했습니다.'};render();return}
+  if(a==='ghpub'){doPublish();return}
+});
+let THEME='auto';
+try{THEME=localStorage.getItem('kbTheme')||'auto'}catch(e){}
+function applyTheme(t){THEME=t;const r=document.documentElement;if(t==='light'||t==='dark')r.setAttribute('data-theme',t);else r.removeAttribute('data-theme');
+  document.querySelectorAll('[data-theme-set]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.themeSet===t));
+  try{localStorage.setItem('kbTheme',t)}catch(e){}}
+document.querySelectorAll('[data-theme-set]').forEach(b=>b.addEventListener('click',()=>applyTheme(b.dataset.themeSet)));
+applyTheme(THEME);
+$('#expAll').addEventListener('click',exportAll);
+$('#goData').addEventListener('click',()=>{S.tab='data';render();window.scrollTo(0,0)});
+try{const h=location.hash.slice(1);if(TABS.some(t=>t[0]===h))S.tab=h}catch(e){}
+(async()=>{
+  try{const r=await fetch('data.json?v='+Math.floor(Date.now()/60000),{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);D=await r.json()}
+  catch(e){$('#view').innerHTML='<div class="note err">데이터를 불러오지 못했습니다. 잠시 후 새로고침해 주세요. ('+esc(e.message||e)+')</div>';return}
+  BASE_LAST=D.dates[D.dates.length-1];setup();asof();render();
+  if(!VIEWER)loadIDB().then(d=>{if(d&&d.dates&&d.dates[d.dates.length-1]>BASE_LAST){D=d;D._src='upload';setup();asof();render()}});
+})();
+})();
+</script>
+
+</body></html>

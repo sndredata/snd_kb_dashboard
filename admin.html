@@ -401,7 +401,7 @@ function viewData(){
   const logs=LOG.map(l=>`<div class="note ${l.t}">${l.h}</div>`).join('');
   return `${warn}<section class="card"><div class="hd"><h2>KB 주간시계열 업데이트</h2></div>
   <p style="margin-top:0">KB부동산이 매주 제공하는 <b>주간시계열 엑셀(.xlsx)</b>을 그대로 올리세요. 이 파일은 2008년부터의 전체 이력을 담고 있어, 기존 시트에 한 주씩 붙여 넣는 작업이 필요 없습니다. 파일의 8개 탭(매매증감·전세증감·매매지수·전세지수·매수우위·매매거래활발·전세수급·전세거래활발)을 읽어 데이터를 통째로 교체합니다.</p>
-  <div class="ctl"><input type="file" id="file" accept=".xlsx" class="btn"><span class="muted" id="fstat"></span></div>${logs}
+  <div class="ctl"><input type="file" id="file" accept=".xlsx" class="btn"><span class="muted" id="fstat"></span></div><div class="ctl"><button class="btn pri" data-act="kbfetch">KB에서 최신 주차 바로 가져오기</button><span class="muted">엑셀 없이 KB부동산 데이터허브에서 새 주차만 받아 덧붙입니다.</span></div>${logs}
   <div class="muted" style="font-size:12px">KB 파일의 열 구성(지역 이름과 순서)이 앱에 내장된 것과 다르면 업데이트를 중단하고 어느 열이 다른지 알려줍니다. 열이 바뀐 상태로 계산하면 지역이 뒤바뀌기 때문입니다.</div></section>
   ${ghCard()}<section class="card"><div class="hd"><h2>현재 데이터</h2></div><div class="tw"><table><tbody>
    <tr><td class="l">주간 시계열(증감·지수)</td><td>${dot(D.dates[0])} ~ ${dot(D.dates[L])}</td><td>${W}주 · ${D.names.length}개 열</td></tr>
@@ -496,6 +496,22 @@ async function publish(){
   await ghApi('/contents/data.json',{method:'PUT',body:JSON.stringify({message:'데이터 업데이트 '+lastDate(),content:b64(JSON.stringify(out)),branch:br,sha:cur?cur.sha:undefined})});
 }
 let PUB=null;
+async function kbFetch(){
+  LOG=[{t:'warn',h:'KB에서 최신 데이터를 확인하는 중… (30초쯤 걸립니다)'}];render();
+  try{
+    const m=await import('./scripts/kb-update.mjs');
+    const N=JSON.parse(JSON.stringify(D));delete N._src;
+    const r=await m.updateData(N,async u=>{const x=await fetch(u);if(!x.ok)throw new Error('HTTP '+x.status);return x.json()});
+    if(!r.weeks.length&&!r.sweeks.length)LOG=[{t:'ok',h:'이미 최신입니다(기준일 '+lastDate()+'). KB에 새 주차가 아직 없습니다.'}];
+    else{
+      N._src='upload';D=N;setup();saveIDB(D);asof();
+      LOG=[{t:'ok',h:'<b>가져오기 완료</b>: 기준일 '+lastDate()+' ('+esc(r.weeks.join(', ')||r.sweeks.join(', '))+' 추가)'}];
+      if(GH.get('token'))await doPublish();
+      else PUB={t:'warn',h:'공유용 대시보드에는 아직 반영되지 않았습니다. 사용자명·저장소·토큰을 저장한 뒤 [지금 게시]를 누르세요.'};
+    }
+  }catch(e){LOG=[{t:'err',h:'<b>가져오기 실패</b>: '+esc(e.message||e)}]}
+  render();
+}
 async function doPublish(){
   PUB={t:'warn',h:'공유용 대시보드에 게시 중… (파일이 커서 10~30초 걸릴 수 있습니다)'};render();
   try{await publish();PUB={t:'ok',h:`<b>게시 완료</b>: 기준일 ${lastDate()}. 1~2분 뒤 공유용 대시보드에 반영됩니다.`}}
@@ -655,6 +671,7 @@ document.addEventListener('click',e=>{
   if(a==='reset'){clearIDB().then(()=>location.reload())}
   if(a==='ghsave'){GH.set('owner',$('#ghOwner').value.trim());GH.set('repo',$('#ghRepo').value.trim());const t=$('#ghToken').value.trim();if(t)GH.set('token',t);PUB={t:'ok',h:'저장했습니다.'};render();return}
   if(a==='ghpub'){doPublish();return}
+  if(a==='kbfetch'){kbFetch();return}
 });
 let THEME='auto';
 try{THEME=localStorage.getItem('kbTheme')||'auto'}catch(e){}
